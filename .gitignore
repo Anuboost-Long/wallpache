@@ -1,0 +1,10 @@
+# Build output
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Release artifacts produced by Scripts/make-dmg.sh
+dist/
+
+.DS_Store
