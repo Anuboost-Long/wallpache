@@ -39,19 +39,22 @@ fi
 
 TARGET="$TARGET_DIR/$APP_NAME"
 
-# Replacing the bundle under a running app leaves it running from a path that no
-# longer exists, and its wallpaper windows outlive it.
-if pgrep -x Wallpache >/dev/null 2>&1; then
-  echo "==> Quitting the running copy"
-  osascript -e 'quit app "Wallpache"' >/dev/null 2>&1 || true
-  sleep 2
-fi
-
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
+# Everything that can fail happens before the running copy is touched. Quitting
+# the app first and then failing to download leaves the user worse off than if
+# they had never run this.
 echo "==> Downloading"
-curl -fSL --progress-bar "$ZIP_URL" -o "$WORK/Wallpache.zip"
+if ! curl -fSL --progress-bar "$ZIP_URL" -o "$WORK/Wallpache.zip"; then
+  echo >&2
+  echo "ERROR: could not download Wallpache." >&2
+  echo "       $ZIP_URL" >&2
+  echo >&2
+  echo "A 404 here means no release has been published yet. Check:" >&2
+  echo "       https://github.com/$REPO/releases" >&2
+  exit 1
+fi
 
 # ditto, not unzip: it is the extraction that keeps the code signature intact.
 echo "==> Extracting"
@@ -68,6 +71,15 @@ echo "==> Verifying the download"
 if ! codesign --verify --strict "$WORK/extracted/$APP_NAME" 2>/dev/null; then
   echo "ERROR: the downloaded app failed signature verification." >&2
   exit 1
+fi
+
+# Only now, with a verified bundle in hand. Replacing the app under a running
+# copy leaves it running from a path that no longer exists, and its wallpaper
+# windows outlive it.
+if pgrep -x Wallpache >/dev/null 2>&1; then
+  echo "==> Quitting the running copy"
+  osascript -e 'quit app "Wallpache"' >/dev/null 2>&1 || true
+  sleep 2
 fi
 
 echo "==> Installing to $TARGET"
