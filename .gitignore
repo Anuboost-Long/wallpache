@@ -7,4 +7,7 @@ xcuserdata/
 # Release artifacts produced by Scripts/make-dmg.sh
 dist/
 
+# Local signing config (see Scripts/signing.env.example)
+Scripts/signing.env
+
 .DS_Store
