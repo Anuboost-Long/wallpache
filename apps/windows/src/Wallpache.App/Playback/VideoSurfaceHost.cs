@@ -202,10 +202,13 @@ public sealed class VideoSurfaceHost : IDisposable
             ApplySurfaceSize(player);
             var surface = player.GetSurface(_compositor);
             _brush.Surface = surface.CompositionSurface;
+            Log.Playback.Info(
+                $"Surface bound: hwnd=0x{_hwnd:X} target={(_target is not null)} " +
+                $"compSurface={(surface.CompositionSurface is not null)} size={_size} videoPx={_videoPixelSize}");
         }
         catch (Exception error)
         {
-            Log.Playback.Error($"Surface binding failed: {error.Message}");
+            Log.Playback.Error($"Surface binding failed: {error.GetType().FullName} {error.Message}\n{error.StackTrace}");
         }
     }
 

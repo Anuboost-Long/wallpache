@@ -494,7 +494,8 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
 
     /// <summary>
     /// Makes each display's system wallpaper match its assigned still frame, and
-    /// puts the user's own picture back where the option is off.
+    /// puts the user's own picture back once nothing of ours is assigned there
+    /// any more.
     /// </summary>
     private void SynchronizeDesktopPictures(IReadOnlyDictionary<string, DisplayDescriptor> displaysById)
     {
@@ -507,9 +508,20 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
             // about to fill a whole display.
             var stillPath = record is null ? null : Storage.PreviewImagePath(record);
 
-            if (!displayConfig.SetsDesktopPicture || stillPath is null)
+            // No wallpaper assigned at all: nothing of ours belongs on the
+            // desktop, so bring the user's own picture back.
+            if (stillPath is null)
             {
-                RestoreDesktopPicture(displayId);
+                _ = RestoreDesktopPictureAsync(displayId);
+                continue;
+            }
+
+            // Turning the option off only stops further updates. It behaves like
+            // the Explorer "Set as desktop background" action: a one-time change
+            // that later actions do not quietly undo, rather than a toggle that
+            // keeps the desktop picture in lockstep going forward.
+            if (!displayConfig.SetsDesktopPicture)
+            {
                 continue;
             }
 
@@ -521,13 +533,33 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
                 continue;
             }
 
-            RememberCurrentPicture(displayId);
+            // Recorded before the (slow, background) call finishes, so a second
+            // reconciliation triggered while it is still in flight does not
+            // queue a duplicate call for the same picture.
+            _appliedDesktopPictures[displayId] = desired;
+            _ = ApplyDesktopPictureAsync(displayId, stillPath, displayConfig.ScalingMode);
+        }
+    }
 
-            if (_desktopPictureService.SetPicture(displayId, stillPath, displayConfig.ScalingMode))
-            {
-                _appliedDesktopPictures[displayId] = desired;
-                Log.Desktop.Info("Desktop picture set");
-            }
+    /// <summary>
+    /// Remembers the user's picture, then applies the still. Runs the actual
+    /// system calls on a background thread (see <see cref="DesktopPictureService"/>)
+    /// and resumes here on the UI thread once each finishes, the same shape as
+    /// <see cref="ImportAsync"/> and <see cref="BackfillStillsAsync"/> below.
+    /// </summary>
+    private async Task ApplyDesktopPictureAsync(string displayId, string stillPath, ScalingMode scalingMode)
+    {
+        await RememberCurrentPictureAsync(displayId);
+
+        if (await _desktopPictureService.SetPictureAsync(displayId, stillPath, scalingMode))
+        {
+            Log.Desktop.Info("Desktop picture set");
+        }
+        else
+        {
+            // Nothing was actually applied, so let the next reconciliation try
+            // again instead of believing it already matches.
+            _appliedDesktopPictures.Remove(displayId);
         }
     }
 
@@ -535,14 +567,14 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
     /// Stores the wallpaper the user had, once per display, so it can be put
     /// back later. Our own stills are never recorded as the previous picture.
     /// </summary>
-    private void RememberCurrentPicture(string displayId)
+    private async Task RememberCurrentPictureAsync(string displayId)
     {
         if (_configuration.PreviousDesktopPictures.ContainsKey(displayId))
         {
             return;
         }
 
-        var current = _desktopPictureService.CurrentPicture(displayId);
+        var current = await _desktopPictureService.CurrentPictureAsync(displayId);
         if (current is null || current.StartsWith(Storage.Root, StringComparison.OrdinalIgnoreCase))
         {
             return;
@@ -552,7 +584,7 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
         Persist();
     }
 
-    private void RestoreDesktopPicture(string displayId)
+    private async Task RestoreDesktopPictureAsync(string displayId)
     {
         _appliedDesktopPictures.Remove(displayId);
 
@@ -570,8 +602,10 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
             return;
         }
 
-        _desktopPictureService.SetPicture(displayId, stored, ScalingMode.Fill);
-        Log.Desktop.Info("Desktop picture restored");
+        if (await _desktopPictureService.SetPictureAsync(displayId, stored, ScalingMode.Fill))
+        {
+            Log.Desktop.Info("Desktop picture restored");
+        }
     }
 
     private void UpdatePlayback()

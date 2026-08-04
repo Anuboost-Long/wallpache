@@ -59,21 +59,46 @@ internal static class CompositionInterop
     {
         try
         {
-            var interop = Compositor.As<ICompositorDesktopInterop>();
-            interop.CreateDesktopWindowTarget(hwnd, false, out var raw);
-            if (raw == IntPtr.Zero)
+            // Compositor.As<ICompositorDesktopInterop>() throws E_NOINTERFACE:
+            // CsWinRT's As/TryAs helpers only resolve interfaces that are
+            // themselves CsWinRT-projected (IInspectable-based), and this interop
+            // interface is a classic IUnknown-derived COM interface with no
+            // projection (see microsoft/CsWinRT#959 - unsupported by design).
+            // Querying the compositor's underlying native pointer directly and
+            // wrapping the result as a plain COM RCW sidesteps CsWinRT entirely.
+            var nativeObject = ((IWinRTObject)Compositor).NativeObject;
+            var interopGuid = typeof(ICompositorDesktopInterop).GUID;
+
+            if (nativeObject.TryAs(interopGuid, out IntPtr interopPtr) < 0 || interopPtr == IntPtr.Zero)
             {
+                Log.Playback.Error("Compositor does not support ICompositorDesktopInterop");
                 return null;
             }
 
-            // The reference handed back is owned by the returned projection for
-            // the lifetime of the window; targets are created once per wallpaper
-            // window and released when the process exits.
-            return MarshalInspectable<DesktopWindowTarget>.FromAbi(raw);
+            try
+            {
+                var interop = (ICompositorDesktopInterop)Marshal.GetTypedObjectForIUnknown(
+                    interopPtr, typeof(ICompositorDesktopInterop));
+
+                interop.CreateDesktopWindowTarget(hwnd, false, out var raw);
+                if (raw == IntPtr.Zero)
+                {
+                    return null;
+                }
+
+                // The reference handed back is owned by the returned projection for
+                // the lifetime of the window; targets are created once per wallpaper
+                // window and released when the process exits.
+                return MarshalInspectable<DesktopWindowTarget>.FromAbi(raw);
+            }
+            finally
+            {
+                Marshal.Release(interopPtr);
+            }
         }
         catch (Exception error)
         {
-            Log.Playback.Error($"Composition target creation failed: {error.Message}");
+            Log.Playback.Error($"Composition target creation failed: {error.GetType().FullName} 0x{error.HResult:X8} {error.Message}\n{error.StackTrace}");
             return null;
         }
     }

@@ -33,8 +33,13 @@ public sealed class WallpaperSession : IDisposable
         _windowController = new WallpaperWindowController(desktopHost, display);
         _player = new VideoLoopPlayer(videoPath, configuration.IsMuted, configuration.PlaybackRate);
 
-        _windowController.Attach(_player);
+        // The video's pixel size must be set before the player is attached: the
+        // composition surface is sized and bound (MediaPlayer.SetSurfaceSize then
+        // GetSurface) on attach, and resizing the surface again right after
+        // GetSurface has already handed out a bound surface stalls the frame
+        // pump after the first frame instead of raising an error.
         _windowController.Apply(configuration.ScalingMode, record.Width, record.Height);
+        _windowController.Attach(_player);
         _windowController.Show();
 
         _player.UnrecoverableFailure += error => PlaybackFailed?.Invoke(DisplayId, error);
@@ -93,8 +98,12 @@ public sealed class WallpaperSession : IDisposable
     public void ReplaceVideo(Guid wallpaperId, string videoPath, int? videoWidth, int? videoHeight)
     {
         WallpaperId = wallpaperId;
-        _player.ReplaceVideo(videoPath);
+
+        // Same ordering requirement as construction: the new size must be in
+        // place before ReplaceVideo rebuilds the player and re-binds the
+        // surface, or the post-bind resize stalls the frame pump.
         _windowController.Apply(Configuration.ScalingMode, videoWidth, videoHeight);
+        _player.ReplaceVideo(videoPath);
     }
 
     public void MoveTo(DisplayDescriptor display) => _windowController.MoveTo(display);

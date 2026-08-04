@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Wallpache.App.Interop;
 using Wallpache.App.Playback;
 using Wallpache.App.Support;
@@ -61,18 +62,23 @@ internal interface IDesktopWallpaper
 /// single monitor; <c>SystemParametersInfo</c> is kept as a fallback for the
 /// case where the COM object is unavailable, at the cost of applying to every
 /// display.
+///
+/// Every call here runs on a thread-pool thread with its own, uncached COM
+/// instance rather than the caller's thread. <c>IDesktopWallpaper</c> is slow
+/// enough (Explorer decodes the image and redraws the desktop synchronously
+/// inside the call) that running it on the UI thread stalls whatever else that
+/// thread is pumping - including the composition dispatcher queue the video
+/// surface depends on for its next frame, which is what made the wallpaper
+/// visibly pause for the call's duration.
 /// </summary>
 public sealed class DesktopPictureService
 {
     private static readonly Guid DesktopWallpaperClsid = new("C2CF3110-460E-4FC1-B9D0-8A1C0C9CC4BD");
 
-    private IDesktopWallpaper? _wallpaper;
-    private bool _comUnavailable;
-
     /// <summary>The picture Windows is showing on <paramref name="displayId"/> right now.</summary>
-    public string? CurrentPicture(string displayId)
+    public Task<string?> CurrentPictureAsync(string displayId) => Task.Run(() =>
     {
-        var wallpaper = Instance();
+        var wallpaper = CreateInstance();
         if (wallpaper is null)
         {
             return null;
@@ -88,16 +94,16 @@ public sealed class DesktopPictureService
             Log.Desktop.Error($"Reading the desktop picture failed: {error.Message}");
             return null;
         }
-    }
+    });
 
     /// <summary>
     /// Points the system wallpaper at <paramref name="imagePath"/>. Returns
     /// <see langword="false"/> when Windows rejects it; a failed desktop picture
     /// is cosmetic, so callers log rather than surface an error.
     /// </summary>
-    public bool SetPicture(string displayId, string imagePath, ScalingMode scalingMode)
+    public Task<bool> SetPictureAsync(string displayId, string imagePath, ScalingMode scalingMode) => Task.Run(() =>
     {
-        var wallpaper = Instance();
+        var wallpaper = CreateInstance();
         if (wallpaper is not null)
         {
             try
@@ -113,7 +119,7 @@ public sealed class DesktopPictureService
         }
 
         return SetPictureForAllDisplays(imagePath);
-    }
+    });
 
     /// <summary>
     /// The single-display fallback. It cannot target one monitor, so it is only
@@ -145,24 +151,23 @@ public sealed class DesktopPictureService
     private static string? MonitorIdFor(string displayId) =>
         displayId.StartsWith(@"\\?\", StringComparison.Ordinal) ? displayId : null;
 
-    private IDesktopWallpaper? Instance()
+    /// <summary>
+    /// A fresh instance per call rather than one cached field: this runs on
+    /// whichever thread-pool thread <see cref="Task.Run(Func{Task})"/> happens to
+    /// use, and a COM object created on the app's own STA UI thread would just
+    /// marshal every call back there - defeating the point of running off it.
+    /// </summary>
+    private static IDesktopWallpaper? CreateInstance()
     {
-        if (_wallpaper is not null || _comUnavailable)
-        {
-            return _wallpaper;
-        }
-
         try
         {
             var type = Type.GetTypeFromCLSID(DesktopWallpaperClsid);
-            _wallpaper = type is null ? null : Activator.CreateInstance(type) as IDesktopWallpaper;
+            return type is null ? null : Activator.CreateInstance(type) as IDesktopWallpaper;
         }
         catch (Exception error)
         {
             Log.Desktop.Error($"IDesktopWallpaper unavailable: {error.Message}");
+            return null;
         }
-
-        _comUnavailable = _wallpaper is null;
-        return _wallpaper;
     }
 }

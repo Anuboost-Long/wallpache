@@ -12,6 +12,7 @@
     <RootNamespace>Wallpache.App</RootNamespace>
     <Product>Wallpache</Product>
     <Version>1.0.0</Version>
+    <ApplicationIcon>Assets\wallpache.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

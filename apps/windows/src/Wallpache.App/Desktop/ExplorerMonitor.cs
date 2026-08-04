@@ -20,7 +20,16 @@ namespace Wallpache.App.Desktop;
 /// </summary>
 public sealed class ExplorerMonitor : IDisposable
 {
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
+    // Explorer recreates its dedicated wallpaper WorkerW - the window the app's
+    // own content is parented into - as a side effect of the desktop picture
+    // changing, not just of Explorer restarting. That happens roughly one to
+    // two seconds after the picture is set, with no broadcast announcing it, so
+    // a slow poll left the wallpaper looking frozen for up to its own interval
+    // every time "Match desktop picture" fired. This has to be short enough
+    // that the gap is not the dominant part of the pause; the check itself is a
+    // single IsWindow call, cheap enough that polling it this often costs
+    // nothing worth trading away for.
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan RestartSettleDelay = TimeSpan.FromMilliseconds(750);
 
     /// <summary>Raised on the UI thread when the desktop hierarchy needs rebuilding.</summary>
@@ -43,20 +52,27 @@ public sealed class ExplorerMonitor : IDisposable
         _taskbarCreatedMessage = NativeMethods.RegisterWindowMessage("TaskbarCreated");
 
         _poll = new DispatcherTimer { Interval = PollInterval };
-        _poll.Tick += (_, _) =>
-        {
-            // With nothing attached there is nothing to repair, and asking
-            // Explorer to rebuild its desktop windows every few seconds for an
-            // idle app is exactly the kind of cost an all-day tray app must not
-            // carry.
-            if (!HasActiveWallpapers || _isHostValid())
-            {
-                return;
-            }
+        _poll.Tick += (_, _) => CheckNow();
+    }
 
-            Log.Desktop.Info("Desktop host handle went stale");
-            DesktopHostInvalidated?.Invoke();
-        };
+    /// <summary>
+    /// Checks immediately rather than waiting for the next poll tick. Callers
+    /// that just did something known to make Explorer rebuild the wallpaper
+    /// host - such as changing the desktop picture - can use this to catch the
+    /// resulting rebuild sooner than even a short poll interval would.
+    /// </summary>
+    public void CheckNow()
+    {
+        // With nothing attached there is nothing to repair, and asking
+        // Explorer to rebuild its desktop windows for an idle app is exactly
+        // the kind of cost an all-day tray app must not carry.
+        if (!HasActiveWallpapers || _isHostValid())
+        {
+            return;
+        }
+
+        Log.Desktop.Info("Desktop host handle went stale");
+        DesktopHostInvalidated?.Invoke();
     }
 
     /// <summary>

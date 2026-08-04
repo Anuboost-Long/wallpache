@@ -199,6 +199,10 @@ public sealed class VideoLoopPlayer : IDisposable
 
             player.CommandManager.IsEnabled = false;
             player.MediaFailed += OnMediaFailed;
+            player.MediaOpened += (sender, _) =>
+                Log.Playback.Info(
+                    $"MediaOpened {Path.GetFileName(FilePath)}: " +
+                    $"{sender.PlaybackSession.NaturalVideoWidth}x{sender.PlaybackSession.NaturalVideoHeight}");
             player.PlaybackSession.PlaybackStateChanged += OnPlaybackStateChanged;
             player.Source = MediaSource.CreateFromUri(new Uri(FilePath));
             player.PlaybackSession.PlaybackRate = _rate;
@@ -271,6 +275,8 @@ public sealed class VideoLoopPlayer : IDisposable
     {
         try
         {
+            Log.Playback.Info($"PlaybackState -> {sender.PlaybackState} for {Path.GetFileName(FilePath)}");
+
             if (sender.PlaybackState == MediaPlaybackState.Playing)
             {
                 _rebuildAttempts = 0;

@@ -128,14 +128,31 @@ public sealed class DesktopHostService
     /// </summary>
     public static IntPtr FindWallpaperHost()
     {
+        // Current Explorer builds nest the dedicated wallpaper WorkerW as a
+        // child of Progman itself, alongside SHELLDLL_DefView, rather than as a
+        // top-level sibling. A window merely sitting behind DefView as a
+        // Progman-fallback sibling is not equivalent: DWM appears to only
+        // composite that position once and never refresh it, freezing video
+        // content there after the first frame. This dedicated WorkerW child, by
+        // contrast, composites continuously - so it must be found and preferred
+        // over the Progman-fallback path.
+        var progman = FindProgman();
+        if (progman != IntPtr.Zero)
+        {
+            var nestedWorkerW = NativeMethods.FindWindowEx(progman, IntPtr.Zero, "WorkerW", null);
+            if (nestedWorkerW != IntPtr.Zero)
+            {
+                return nestedWorkerW;
+            }
+        }
+
+        // Older Explorer builds create it as a top-level sibling instead.
         var defViewOwner = FindShellDefViewOwner();
         if (defViewOwner == IntPtr.Zero)
         {
             return IntPtr.Zero;
         }
 
-        // The sibling that follows the icon view in z-order is the one Explorer
-        // paints the wallpaper into.
         return NativeMethods.FindWindowEx(IntPtr.Zero, defViewOwner, "WorkerW", null);
     }
 
@@ -182,9 +199,26 @@ public sealed class DesktopHostService
             originY = hostRect.Top;
         }
 
+        // Ordinarily the host is a WorkerW dedicated to the wallpaper, with
+        // nothing else parented to it, so sinking to the bottom is enough. When
+        // Explorer never split off that dedicated WorkerW, the host is Progman
+        // itself and the icon view (SHELLDLL_DefView) is a sibling; sinking to
+        // the absolute bottom then hides the wallpaper behind the (opaque, in
+        // that configuration) icon view instead of behind it. Inserting directly
+        // after the icon view keeps icons on top while the wallpaper still shows.
+        var insertAfter = NativeMethods.HWND_BOTTOM;
+        if (_host.IsValid)
+        {
+            var defView = NativeMethods.FindWindowEx(_host.Handle, IntPtr.Zero, "SHELLDLL_DefView", null);
+            if (defView != IntPtr.Zero && defView != window)
+            {
+                insertAfter = defView;
+            }
+        }
+
         NativeMethods.SetWindowPos(
             window,
-            NativeMethods.HWND_BOTTOM,
+            insertAfter,
             bounds.Left - originX,
             bounds.Top - originY,
             bounds.Width,
