@@ -24,6 +24,7 @@ public sealed class VideoLoopPlayer : IDisposable
 
     private readonly object _gate = new();
     private MediaPlayer? _player;
+    private MediaPlayer? _pendingPlayer;
     private int _rebuildAttempts;
     private bool _isPlaying;
     private bool _isMuted;
@@ -101,13 +102,17 @@ public sealed class VideoLoopPlayer : IDisposable
         _disposed = true;
 
         MediaPlayer? player;
+        MediaPlayer? pending;
         lock (_gate)
         {
             player = _player;
             _player = null;
+            pending = _pendingPlayer;
+            _pendingPlayer = null;
         }
 
         DestroyPlayer(player);
+        DestroyPlayer(pending);
     }
 
     public void SetMuted(bool isMuted)
@@ -130,11 +135,20 @@ public sealed class VideoLoopPlayer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Switches to a different clip without ever showing a blank frame: a
+    /// second player opens and starts <paramref name="newPath"/> off-screen
+    /// while the current one keeps playing, and only takes over once it has
+    /// real frames flowing (see <see cref="BeginSwap"/>). <see cref="Rebuild"/>,
+    /// used for recovery, still tears down and rebuilds immediately, since
+    /// there is nothing worth preserving on screen when the player is already
+    /// broken.
+    /// </summary>
     public void ReplaceVideo(string newPath)
     {
         FilePath = newPath;
         _rebuildAttempts = 0;
-        Rebuild();
+        BeginSwap();
     }
 
     /// <summary>
@@ -268,8 +282,118 @@ public sealed class VideoLoopPlayer : IDisposable
     }
 
     /// <summary>
+    /// Prepares a replacement player for <see cref="FilePath"/> off-screen -
+    /// muted, unbound from any surface - while the current one keeps playing.
+    /// <see cref="OnPlaybackStateChanged"/> promotes it via
+    /// <see cref="CompleteSwap"/> once it reaches
+    /// <see cref="MediaPlaybackState.Playing"/>, so the old player is never
+    /// torn down before the new one has a frame ready to show.
+    /// </summary>
+    private void BeginSwap()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        var candidate = CreatePlayer();
+        if (candidate is null)
+        {
+            Log.Playback.Error($"Could not prepare a replacement player for {Path.GetFileName(FilePath)}");
+            return;
+        }
+
+        MediaPlayer? stale;
+        lock (_gate)
+        {
+            // A swap was already pending; the newer request wins and the
+            // half-prepared one is abandoned.
+            stale = _pendingPlayer;
+            _pendingPlayer = candidate;
+        }
+
+        DestroyPlayer(stale);
+
+        candidate.IsMuted = true;
+
+        try
+        {
+            candidate.Play();
+        }
+        catch (Exception error)
+        {
+            Log.Playback.Error($"Priming the replacement player failed: {error.Message}");
+            AbandonSwap(candidate);
+        }
+    }
+
+    /// <summary>
+    /// Promotes a prepared candidate to the live player. The outgoing player
+    /// is silenced before the incoming one is made audible, so the two are
+    /// never both heard at once, and is only destroyed once the surface has
+    /// already been told to rebind (see <see cref="PlayerReplaced"/>).
+    /// </summary>
+    private void CompleteSwap(MediaPlayer candidate)
+    {
+        bool superseded;
+        MediaPlayer? old = null;
+
+        lock (_gate)
+        {
+            superseded = !ReferenceEquals(_pendingPlayer, candidate);
+            if (!superseded)
+            {
+                old = _player;
+                _player = candidate;
+                _pendingPlayer = null;
+            }
+        }
+
+        if (superseded)
+        {
+            DestroyPlayer(candidate);
+            return;
+        }
+
+        if (old is not null)
+        {
+            try
+            {
+                old.IsMuted = true;
+            }
+            catch (Exception)
+            {
+                // Being torn down regardless; a failed mute is not worth logging.
+            }
+        }
+
+        candidate.IsMuted = _isMuted;
+        candidate.PlaybackSession.PlaybackRate = _rate;
+
+        PlayerReplaced?.Invoke(candidate);
+
+        DestroyPlayer(old);
+    }
+
+    /// <summary>Discards a candidate that failed before it could take over.</summary>
+    private void AbandonSwap(MediaPlayer candidate)
+    {
+        lock (_gate)
+        {
+            if (ReferenceEquals(_pendingPlayer, candidate))
+            {
+                _pendingPlayer = null;
+            }
+        }
+
+        DestroyPlayer(candidate);
+    }
+
+    /// <summary>
     /// Reaching <see cref="MediaPlaybackState.Playing"/> proves the current build
     /// works, so the rebuild budget resets and a long session cannot exhaust it.
+    /// The same signal, on a pending candidate's session, means it now has a
+    /// real frame ready and can take over from the current player.
     /// </summary>
     private void OnPlaybackStateChanged(MediaPlaybackSession sender, object args)
     {
@@ -277,9 +401,17 @@ public sealed class VideoLoopPlayer : IDisposable
         {
             Log.Playback.Info($"PlaybackState -> {sender.PlaybackState} for {Path.GetFileName(FilePath)}");
 
-            if (sender.PlaybackState == MediaPlaybackState.Playing)
+            if (sender.PlaybackState != MediaPlaybackState.Playing)
             {
-                _rebuildAttempts = 0;
+                return;
+            }
+
+            _rebuildAttempts = 0;
+
+            var pending = _pendingPlayer;
+            if (pending is not null && ReferenceEquals(sender, pending.PlaybackSession))
+            {
+                Dispatcher.UIThread.Post(() => CompleteSwap(pending));
             }
         }
         catch (Exception)
@@ -290,12 +422,24 @@ public sealed class VideoLoopPlayer : IDisposable
 
     /// <summary>
     /// Media failures arrive on a background thread; every repair runs on the UI
-    /// thread so the surface rebind and the player swap stay ordered.
+    /// thread so the surface rebind and the player swap stay ordered. A
+    /// failure on a pending candidate only abandons that candidate - the
+    /// still-healthy active player must not be rebuilt because of it.
     /// </summary>
     private void OnMediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
     {
         var error = args.ExtendedErrorCode;
-        Dispatcher.UIThread.Post(() => HandleFailure(error));
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (ReferenceEquals(sender, _pendingPlayer))
+            {
+                Log.Playback.Error($"Replacement player failed to open {Path.GetFileName(FilePath)}: {error?.Message}");
+                AbandonSwap(sender);
+                return;
+            }
+
+            HandleFailure(error);
+        });
     }
 
     private void HandleFailure(Exception? error)

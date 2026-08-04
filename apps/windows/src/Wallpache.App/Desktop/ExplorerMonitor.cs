@@ -56,10 +56,7 @@ public sealed class ExplorerMonitor : IDisposable
     }
 
     /// <summary>
-    /// Checks immediately rather than waiting for the next poll tick. Callers
-    /// that just did something known to make Explorer rebuild the wallpaper
-    /// host - such as changing the desktop picture - can use this to catch the
-    /// resulting rebuild sooner than even a short poll interval would.
+    /// Checks immediately rather than waiting for the next poll tick.
     /// </summary>
     public void CheckNow()
     {
@@ -74,6 +71,17 @@ public sealed class ExplorerMonitor : IDisposable
         Log.Desktop.Info("Desktop host handle went stale");
         DesktopHostInvalidated?.Invoke();
     }
+
+    /// <summary>
+    /// Schedules a check timed to Explorer's own rebuild delay, for callers
+    /// that just did something known to make it rebuild the wallpaper host -
+    /// such as changing the desktop picture. A bare <see cref="CheckNow"/>
+    /// called immediately after that change would just see the still-valid
+    /// old host, since the rebuild itself lags behind by roughly a second;
+    /// this catches the resulting invalidation close to when it actually
+    /// happens instead of waiting for the next poll tick.
+    /// </summary>
+    public void CheckSoon() => DispatcherTimer.RunOnce(CheckNow, RestartSettleDelay);
 
     /// <summary>
     /// Set by the coordinator whenever the number of live sessions changes. The

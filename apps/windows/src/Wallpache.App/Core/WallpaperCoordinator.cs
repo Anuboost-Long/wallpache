@@ -40,6 +40,13 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
     private readonly Dictionary<string, WallpaperSession> _sessions = [];
     private readonly Dictionary<string, AppliedDesktopPicture> _appliedDesktopPictures = [];
 
+    /// <summary>
+    /// The in-flight <see cref="ApplyDesktopPictureAsync"/> call per display, if
+    /// any, so a video swap on that display can wait for it instead of cutting
+    /// to the new clip before the background underneath has changed.
+    /// </summary>
+    private readonly Dictionary<string, Task> _pendingDesktopPictureUpdates = [];
+
     private AppConfiguration _configuration;
     private bool _hasStarted;
 
@@ -424,6 +431,14 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
             _sessions.Remove(displayId);
         }
 
+        // Kicked off before video swaps, and deliberately outside the enabled
+        // check below: the still image is what the user sees once playback
+        // stops, so it must survive a stopped wallpaper. Running it first also
+        // means a display with SetsDesktopPicture on has its background update
+        // already in flight by the time SynchronizeSession decides whether a
+        // video swap needs to wait on it.
+        SynchronizeDesktopPictures(displaysById);
+
         if (_configuration.IsWallpaperEnabled)
         {
             foreach (var (displayId, display) in displaysById)
@@ -435,10 +450,6 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
         {
             DesktopHostService.RefreshDesktop();
         }
-
-        // Deliberately outside the enabled check: the still image is what the
-        // user sees once playback stops, so it must survive a stopped wallpaper.
-        SynchronizeDesktopPictures(displaysById);
 
         _explorerMonitor.HasActiveWallpapers = _sessions.Count > 0;
         UpdatePlayback();
@@ -469,7 +480,18 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
 
             if (session.WallpaperId != record.Id)
             {
-                session.ReplaceVideo(record.Id, videoPath, record.Width, record.Height);
+                if (displayConfig.SetsDesktopPicture
+                    && _pendingDesktopPictureUpdates.TryGetValue(displayId, out var pendingPictureUpdate))
+                {
+                    // Let the desktop background finish updating first, so the
+                    // video is never seen cutting to the new clip while the old
+                    // still is still showing underneath it.
+                    _ = DeferredReplaceVideoAsync(displayId, pendingPictureUpdate);
+                }
+                else
+                {
+                    session.ReplaceVideo(record.Id, videoPath, record.Width, record.Height);
+                }
             }
 
             session.Update(displayConfig, record.Width, record.Height);
@@ -488,6 +510,41 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
 
         _sessions[displayId] = created;
         Log.Playback.Info($"Started session on {display.Name}");
+    }
+
+    /// <summary>
+    /// Swaps a session's video only once its desktop-picture update finishes.
+    /// Recomputes the desired wallpaper from the live configuration rather
+    /// than trusting the values captured when this was scheduled, since a
+    /// later change can supersede this one before it resumes; that also makes
+    /// overlapping calls for the same display converge instead of racing.
+    /// </summary>
+    private async Task DeferredReplaceVideoAsync(string displayId, Task pendingPictureUpdate)
+    {
+        try
+        {
+            await pendingPictureUpdate;
+        }
+        catch (Exception error)
+        {
+            // The picture update already logged its own failure; the video
+            // swap should still proceed rather than being stuck forever.
+            Log.Desktop.Error($"Desktop picture update failed before a pending video swap: {error.Message}");
+        }
+
+        if (!_sessions.TryGetValue(displayId, out var session))
+        {
+            return;
+        }
+
+        var displayConfig = DisplayConfigurationFor(displayId);
+        var record = _configuration.Wallpaper(displayConfig.WallpaperId);
+        if (record is null || !_libraryService.FileExists(record) || session.WallpaperId == record.Id)
+        {
+            return;
+        }
+
+        session.ReplaceVideo(record.Id, Storage.VideoPath(record), record.Width, record.Height);
     }
 
     // MARK: - Desktop picture
@@ -535,9 +592,11 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
 
             // Recorded before the (slow, background) call finishes, so a second
             // reconciliation triggered while it is still in flight does not
-            // queue a duplicate call for the same picture.
+            // queue a duplicate call for the same picture. Also tracked so a
+            // pending video swap on this display (see SynchronizeSession) can
+            // wait for this specific call instead of a future, unrelated one.
             _appliedDesktopPictures[displayId] = desired;
-            _ = ApplyDesktopPictureAsync(displayId, stillPath, displayConfig.ScalingMode);
+            _pendingDesktopPictureUpdates[displayId] = ApplyDesktopPictureAsync(displayId, stillPath, displayConfig.ScalingMode);
         }
     }
 
@@ -549,17 +608,30 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
     /// </summary>
     private async Task ApplyDesktopPictureAsync(string displayId, string stillPath, ScalingMode scalingMode)
     {
-        await RememberCurrentPictureAsync(displayId);
+        try
+        {
+            await RememberCurrentPictureAsync(displayId);
 
-        if (await _desktopPictureService.SetPictureAsync(displayId, stillPath, scalingMode))
-        {
-            Log.Desktop.Info("Desktop picture set");
+            if (await _desktopPictureService.SetPictureAsync(displayId, stillPath, scalingMode))
+            {
+                Log.Desktop.Info("Desktop picture set");
+
+                // Setting the picture makes Explorer rebuild the wallpaper host a
+                // moment later; catch that sooner than the general poll would.
+                _explorerMonitor.CheckSoon();
+            }
+            else
+            {
+                // Nothing was actually applied, so let the next reconciliation try
+                // again instead of believing it already matches.
+                _appliedDesktopPictures.Remove(displayId);
+            }
         }
-        else
+        finally
         {
-            // Nothing was actually applied, so let the next reconciliation try
-            // again instead of believing it already matches.
-            _appliedDesktopPictures.Remove(displayId);
+            // Lets a video swap deferred on this call (see
+            // DeferredReplaceVideoAsync) know it is no longer pending.
+            _pendingDesktopPictureUpdates.Remove(displayId);
         }
     }
 
@@ -605,6 +677,7 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
         if (await _desktopPictureService.SetPictureAsync(displayId, stored, ScalingMode.Fill))
         {
             Log.Desktop.Info("Desktop picture restored");
+            _explorerMonitor.CheckSoon();
         }
     }
 
