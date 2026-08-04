@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Wallpache.App.ViewModels"
+             xmlns:playback="using:Wallpache.App.Playback"
+             xmlns:ui="using:Wallpache.App.UI"
+             mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="480"
+             x:Class="Wallpache.App.Views.DisplayConfigurationView"
+             x:DataType="vm:MainViewModel">
+
+    <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding DisplayItems}" Margin="16">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:DisplayItemViewModel">
+                    <Border Margin="0,0,0,16"
+                            Padding="16"
+                            CornerRadius="10"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        <StackPanel Spacing="12">
+
+                            <!-- Header -->
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding Name}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="Main"
+                                           Margin="8,0,0,0"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Opacity="0.6"
+                                           IsVisible="{Binding IsPrimary}" />
+                                <TextBlock Grid.Column="3"
+                                           Text="{Binding ResolutionDescription}"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Opacity="0.6" />
+                            </Grid>
+
+                            <Separator />
+
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0" Text="Wallpaper" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          HorizontalAlignment="Stretch"
+                                          ItemsSource="{Binding Wallpapers}"
+                                          SelectedItem="{Binding SelectedWallpaper}"
+                                          DisplayMemberBinding="{Binding Name}" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="140,*">
+                                <TextBlock Grid.Column="0" Text="Scaling" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          HorizontalAlignment="Stretch"
+                                          IsEnabled="{Binding HasWallpaper}"
+                                          ItemsSource="{Binding ScalingModes}"
+                                          SelectedItem="{Binding SelectedScalingMode}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="playback:ScalingMode">
+                                            <TextBlock Text="{Binding Converter={x:Static ui:Converters.ScalingModeName}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="140,*">
+                                <TextBlock Grid.Column="0" Text="Speed" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          HorizontalAlignment="Stretch"
+                                          IsEnabled="{Binding HasWallpaper}"
+                                          ItemsSource="{Binding Rates}"
+                                          SelectedItem="{Binding SelectedRate}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="x:Double">
+                                            <TextBlock Text="{Binding Converter={x:Static ui:Converters.PlaybackRate}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </Grid>
+
+                            <CheckBox Content="Play audio"
+                                      IsEnabled="{Binding HasWallpaper}"
+                                      IsChecked="{Binding PlaysAudio}" />
+
+                            <StackPanel Spacing="2">
+                                <CheckBox Content="Match desktop picture"
+                                          IsEnabled="{Binding HasWallpaper}"
+                                          IsChecked="{Binding MatchesDesktopPicture}" />
+                                <TextBlock Text="Sets a still frame from this video as the Windows wallpaper, so this display still matches when Wallpache is not running."
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Opacity="0.6" />
+                            </StackPanel>
+
+                            <Button Content="Remove Wallpaper"
+                                    HorizontalAlignment="Left"
+                                    IsVisible="{Binding HasWallpaper}"
+                                    Click="OnRemoveWallpaper" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>

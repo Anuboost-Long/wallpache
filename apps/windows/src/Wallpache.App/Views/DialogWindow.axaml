@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="Wallpache.App.Views.DialogWindow"
+        Title="Wallpache"
+        Width="420"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="20" Spacing="14">
+        <TextBlock x:Name="TitleText"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   TextWrapping="Wrap" />
+
+        <TextBlock x:Name="MessageText"
+                   TextWrapping="Wrap"
+                   Opacity="0.8" />
+
+        <TextBox x:Name="InputBox" IsVisible="False" />
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8">
+            <Button x:Name="CancelButton"
+                    Content="Cancel"
+                    IsCancel="True"
+                    IsVisible="False"
+                    Click="OnCancel" />
+            <Button x:Name="ConfirmButton"
+                    Content="OK"
+                    IsDefault="True"
+                    Classes="accent"
+                    Click="OnConfirm" />
+        </StackPanel>
+    </StackPanel>
+</Window>

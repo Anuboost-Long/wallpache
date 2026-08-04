@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Wallpache.App.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="480"
+             x:Class="Wallpache.App.Views.SettingsView"
+             x:DataType="vm:MainViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.section">
+            <Setter Property="Margin" Value="0,0,0,16" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        </Style>
+        <Style Selector="TextBlock.heading">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style Selector="TextBlock.footnote">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.6" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <StackPanel Margin="16">
+
+            <Border Classes="section">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="heading" Text="Startup" />
+                    <CheckBox Content="Launch Wallpache at sign-in"
+                              IsChecked="{Binding LaunchAtSignIn}" />
+                    <TextBlock Classes="footnote"
+                               IsVisible="{Binding IsStartupUnavailable}"
+                               Text="Launch at sign-in is unavailable: Wallpache could not write its startup entry. A device policy may be blocking it." />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="section">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="heading" Text="Energy Saving" />
+                    <CheckBox Content="Pause in Battery Saver"
+                              IsChecked="{Binding PauseInBatterySaver}" />
+                    <CheckBox Content="Pause when running on battery"
+                              IsChecked="{Binding PauseOnBatteryPower}" />
+                    <CheckBox Content="Pause while the screen is locked"
+                              IsChecked="{Binding PauseWhenScreenLocked}" />
+                    <TextBlock Classes="footnote"
+                               Text="A video wallpaper uses more power than a still image. Higher resolutions and frame rates use more; a 1080p clip is usually a good balance." />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="section">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="heading" Text="Storage" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Show in File Explorer" Click="OnRevealStorage" />
+                        <Button Content="Delete All Imported Videos…" Click="OnDeleteAll" />
+                    </StackPanel>
+                    <TextBlock Classes="footnote"
+                               Text="Imported videos are copied into Wallpache's own folder so they keep working if the original is moved or deleted." />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="section">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="heading" Text="Privacy" />
+                    <TextBlock TextWrapping="Wrap"
+                               Opacity="0.75"
+                               Text="Wallpache works entirely on this PC. Your videos are never uploaded, no account is required, and nothing is collected about the files you use." />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

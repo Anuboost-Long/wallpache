@@ -1,0 +1,159 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Wallpache.App.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="480"
+             x:Class="Wallpache.App.Views.LibraryView"
+             x:DataType="vm:MainViewModel">
+
+    <UserControl.Resources>
+        <!-- The per-display "apply here" menu is built by binding rather than by
+             a click handler per item, so it follows display changes on its own. -->
+        <ControlTheme x:Key="DisplayTargetMenuItemTheme"
+                      TargetType="MenuItem"
+                      BasedOn="{StaticResource {x:Type MenuItem}}"
+                      x:DataType="vm:DisplayTargetViewModel">
+            <Setter Property="Header" Value="{Binding Name}" />
+            <Setter Property="Command" Value="{Binding ApplyCommand}" />
+        </ControlTheme>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="*,Auto,Auto">
+
+        <!-- Empty state -->
+        <StackPanel Grid.Row="0"
+                    IsVisible="{Binding IsLibraryEmpty}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="10"
+                    MaxWidth="360">
+            <Image Source="avares://Wallpache/Assets/brand-mark.png"
+                   Width="76"
+                   Height="76"
+                   Opacity="0.9" />
+            <TextBlock Text="No wallpapers yet"
+                       FontSize="18"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Drag an .mp4, .mov, or .m4v video here, or use Import Video."
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       Opacity="0.7" />
+        </StackPanel>
+
+        <!-- Grid of imported wallpapers -->
+        <ScrollViewer Grid.Row="0" IsVisible="{Binding !IsLibraryEmpty}">
+            <ItemsControl ItemsSource="{Binding LibraryItems}" Margin="16">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:WallpaperItemViewModel">
+                        <Border Width="248"
+                                Margin="0,0,16,16"
+                                Padding="10"
+                                CornerRadius="12"
+                                Background="{DynamicResource ControlFillColorDefaultBrush}">
+                            <StackPanel Spacing="8">
+                                <Border CornerRadius="8"
+                                        ClipToBounds="True"
+                                        Height="128"
+                                        Background="{DynamicResource ControlAltFillColorTertiaryBrush}">
+                                    <Panel>
+                                        <TextBlock Text="🎞"
+                                                   FontSize="26"
+                                                   Opacity="0.45"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                    </Panel>
+                                </Border>
+
+                                <TextBlock Text="{Binding Name}"
+                                           FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Subtitle}"
+                                           FontSize="12"
+                                           Opacity="0.7" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button Content="Apply" Click="OnApply" />
+                                    <Button Content="Preview" Click="OnPreview" />
+
+                                    <Button Content="Display"
+                                            IsEnabled="{Binding CanChooseDisplay}">
+                                        <Button.Flyout>
+                                            <MenuFlyout ItemsSource="{Binding DisplayTargets}"
+                                                        ItemContainerTheme="{StaticResource DisplayTargetMenuItemTheme}" />
+                                        </Button.Flyout>
+                                    </Button>
+
+                                    <!-- Rename and delete are also in the context menu, but a
+                                         right-click-only action is easy to miss. -->
+                                    <Button Content="⋯" ToolTip.Tip="More actions">
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuItem Header="Rename…" Click="OnRename" />
+                                                <Separator />
+                                                <MenuItem Header="Delete…" Click="OnDelete" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="Preview…" Click="OnPreview" />
+                                    <MenuItem Header="Apply to All Displays" Click="OnApply" />
+                                    <MenuItem Header="Apply to Display"
+                                              IsEnabled="{Binding CanChooseDisplay}"
+                                              ItemsSource="{Binding DisplayTargets}"
+                                              ItemContainerTheme="{StaticResource DisplayTargetMenuItemTheme}" />
+                                    <Separator />
+                                    <MenuItem Header="Rename…" Click="OnRename" />
+                                    <MenuItem Header="Delete…" Click="OnDelete" />
+                                </MenuFlyout>
+                            </Border.ContextFlyout>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Separator Grid.Row="1" />
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="12">
+            <TextBlock Grid.Column="0"
+                       Text="{Binding Coordinator.StatusMessage}"
+                       VerticalAlignment="Center"
+                       Opacity="0.7" />
+
+            <ProgressBar Grid.Column="1"
+                         IsIndeterminate="True"
+                         Width="90"
+                         Margin="0,0,10,0"
+                         VerticalAlignment="Center"
+                         IsVisible="{Binding Coordinator.IsImporting}" />
+
+            <Button Grid.Column="2"
+                    Content="Import Video…"
+                    Classes="accent"
+                    Click="OnImport"
+                    IsEnabled="{Binding !Coordinator.IsImporting}" />
+        </Grid>
+
+        <!-- Drop target highlight -->
+        <Border Grid.Row="0"
+                x:Name="DropHighlight"
+                IsVisible="False"
+                IsHitTestVisible="False"
+                Margin="8"
+                CornerRadius="12"
+                BorderThickness="3"
+                BorderBrush="{StaticResource BrandWavePurpleBrush}" />
+    </Grid>
+</UserControl>

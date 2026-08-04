@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Wallpache.App/Wallpache.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Wallpache.App.Tests/Wallpache.App.Tests.csproj" />
+  </Folder>
+</Solution>

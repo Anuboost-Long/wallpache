@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:Wallpache.App.UI"
+        mc:Ignorable="d"
+        x:Class="Wallpache.App.Views.WallpaperPreviewWindow"
+        Title="Preview"
+        Width="672"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="16" Spacing="12">
+
+        <Border CornerRadius="10"
+                ClipToBounds="True"
+                Background="Black"
+                Width="640"
+                Height="360">
+            <Panel>
+                <!-- The still is shown until playback starts, so the sheet never
+                     opens on an empty black rectangle. -->
+                <Image x:Name="StillImage" Stretch="UniformToFill" />
+
+                <ui:NativeVideoView x:Name="VideoView" IsVisible="False" />
+
+                <Button x:Name="PlayButton"
+                        Content="▶  Play Preview"
+                        Classes="accent"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Padding="16,10"
+                        Click="OnStartPreview" />
+            </Panel>
+        </Border>
+
+        <Grid ColumnDefinitions="*,Auto,Auto">
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock x:Name="NameText" FontWeight="SemiBold" />
+                <TextBlock x:Name="SubtitleText" FontSize="12" Opacity="0.7" />
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Content="Close"
+                    IsCancel="True"
+                    Margin="0,0,8,0"
+                    Click="OnClose" />
+
+            <Button Grid.Column="2"
+                    Content="Apply to All Displays"
+                    IsDefault="True"
+                    Classes="accent"
+                    Click="OnApply" />
+        </Grid>
+    </StackPanel>
+</Window>

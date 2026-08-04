@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:Wallpache.App.ViewModels"
+        xmlns:views="using:Wallpache.App.Views"
+        mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="560"
+        x:Class="Wallpache.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/wallpache.ico"
+        Title="Wallpache"
+        Width="820"
+        Height="560"
+        MinWidth="720"
+        MinHeight="480">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- Icon, name, and tagline, so the window reads as Wallpache rather
+             than a generic tab bar. -->
+        <Border Grid.Row="0"
+                Padding="16,12"
+                Background="{StaticResource BrandHeaderBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Image Source="avares://Wallpache/Assets/brand-mark.png" Width="40" Height="40" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Wallpache" FontSize="18" FontWeight="SemiBold" />
+                    <TextBlock Text="{StaticResource BrandTagline}" FontSize="12" Opacity="0.7" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Rectangle Grid.Row="1" Height="2" Fill="{StaticResource BrandWaveBrush}" />
+
+        <TabControl Grid.Row="2" Padding="0">
+            <TabItem Header="Library">
+                <views:LibraryView x:Name="Library" />
+            </TabItem>
+            <TabItem Header="Displays">
+                <views:DisplayConfigurationView />
+            </TabItem>
+            <TabItem Header="Settings">
+                <views:SettingsView />
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- The icon pack's palette, so the window chrome matches the app icon.
+         Values are the ones documented in the pack's README. -->
+
+    <!-- Icon backdrop, top to bottom. -->
+    <Color x:Key="BrandBackdropTop">#191826</Color>
+    <Color x:Key="BrandBackdropBottom">#0C0B13</Color>
+
+    <!-- The lavender window frame drawn inside the icon. -->
+    <Color x:Key="BrandFrameLight">#C9BEF5</Color>
+    <Color x:Key="BrandFrameDark">#8F7FD0</Color>
+
+    <!-- The wave sweeping across the icon. -->
+    <Color x:Key="BrandWaveOrange">#FF7A2F</Color>
+    <Color x:Key="BrandWavePink">#FF3F7D</Color>
+    <Color x:Key="BrandWavePurple">#8A4CFF</Color>
+
+    <SolidColorBrush x:Key="BrandFrameLightBrush" Color="{StaticResource BrandFrameLight}" />
+    <SolidColorBrush x:Key="BrandWavePurpleBrush" Color="{StaticResource BrandWavePurple}" />
+
+    <!-- The wave gradient, used as an accent rule and for highlighted text. -->
+    <LinearGradientBrush x:Key="BrandWaveBrush" StartPoint="0%,50%" EndPoint="100%,50%">
+        <GradientStop Offset="0" Color="{StaticResource BrandWaveOrange}" />
+        <GradientStop Offset="0.5" Color="{StaticResource BrandWavePink}" />
+        <GradientStop Offset="1" Color="{StaticResource BrandWavePurple}" />
+    </LinearGradientBrush>
+
+    <!-- A soft version of the icon backdrop for header bars. It stays subtle in
+         light mode instead of punching a dark slab into the window. -->
+    <LinearGradientBrush x:Key="BrandHeaderBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Offset="0" Color="#38C9BEF5" />
+        <GradientStop Offset="1" Color="#1F8A4CFF" />
+    </LinearGradientBrush>
+
+    <x:String x:Key="BrandTagline">Bring your desktop to life.</x:String>
+
+</ResourceDictionary>
