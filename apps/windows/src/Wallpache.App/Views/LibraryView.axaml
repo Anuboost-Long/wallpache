@@ -52,25 +52,52 @@
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:WallpaperItemViewModel">
-                        <Border Width="248"
+                        <Border Width="272"
                                 Margin="0,0,16,16"
-                                Padding="10"
-                                CornerRadius="12"
-                                Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                Padding="12"
+                                ClipToBounds="True"
+                                Classes="card">
                             <StackPanel Spacing="8">
-                                <Border CornerRadius="8"
-                                        ClipToBounds="True"
-                                        Height="128"
-                                        Background="{DynamicResource ControlAltFillColorTertiaryBrush}">
-                                    <Panel>
-                                        <TextBlock Text="🎞"
-                                                   FontSize="26"
-                                                   Opacity="0.45"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center" />
-                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
-                                    </Panel>
-                                </Border>
+                                <!-- A Panel, not a nested child of the thumbnail: the "…"
+                                     button overlays the thumbnail's top-right corner but is
+                                     a sibling of it, not inside its ClipToBounds, so the
+                                     thumbnail's rounded-corner clip can never eat part of the
+                                     button's hit-test area. Moving "…" here (off the action
+                                     row below) also means that row never has to fit four
+                                     buttons in the card's fixed width, which is what silently
+                                     clipped - and made unclickable - part of a wider "…". -->
+                                <Panel>
+                                    <Border CornerRadius="10"
+                                            ClipToBounds="True"
+                                            Height="152"
+                                            Background="{DynamicResource ControlAltFillColorTertiaryBrush}">
+                                        <Panel>
+                                            <TextBlock Text="🎞"
+                                                       FontSize="26"
+                                                       Opacity="0.45"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                        </Panel>
+                                    </Border>
+
+                                    <!-- Rename and delete are also in the context menu, but a
+                                         right-click-only action is easy to miss. -->
+                                    <Button Content="⋯"
+                                            Classes="icon-circle on-image"
+                                            Margin="6"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            ToolTip.Tip="More actions">
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuItem Header="Rename…" Click="OnRename" />
+                                                <Separator />
+                                                <MenuItem Header="Delete…" Click="OnDelete" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Panel>
 
                                 <TextBlock Text="{Binding Name}"
                                            FontWeight="SemiBold"
@@ -80,26 +107,15 @@
                                            Opacity="0.7" />
 
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Button Content="Apply" Click="OnApply" />
-                                    <Button Content="Preview" Click="OnPreview" />
+                                    <Button Content="Apply" Classes="pill-action emphasized" Click="OnApply" />
+                                    <Button Content="Preview" Classes="pill-action emphasized" Click="OnPreview" />
 
-                                    <Button Content="Display"
+                                    <Button Content="Display ⌄"
+                                            Classes="pill-action"
                                             IsEnabled="{Binding CanChooseDisplay}">
                                         <Button.Flyout>
                                             <MenuFlyout ItemsSource="{Binding DisplayTargets}"
                                                         ItemContainerTheme="{StaticResource DisplayTargetMenuItemTheme}" />
-                                        </Button.Flyout>
-                                    </Button>
-
-                                    <!-- Rename and delete are also in the context menu, but a
-                                         right-click-only action is easy to miss. -->
-                                    <Button Content="⋯" ToolTip.Tip="More actions">
-                                        <Button.Flyout>
-                                            <MenuFlyout>
-                                                <MenuItem Header="Rename…" Click="OnRename" />
-                                                <Separator />
-                                                <MenuItem Header="Delete…" Click="OnDelete" />
-                                            </MenuFlyout>
                                         </Button.Flyout>
                                     </Button>
                                 </StackPanel>
@@ -129,6 +145,7 @@
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="12">
             <TextBlock Grid.Column="0"
                        Text="{Binding Coordinator.StatusMessage}"
+                       FontSize="12"
                        VerticalAlignment="Center"
                        Opacity="0.7" />
 
@@ -142,6 +159,7 @@
             <Button Grid.Column="2"
                     Content="Import Video…"
                     Classes="accent"
+                    FontSize="12"
                     Click="OnImport"
                     IsEnabled="{Binding !Coordinator.IsImporting}" />
         </Grid>

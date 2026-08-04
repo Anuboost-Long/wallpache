@@ -11,8 +11,10 @@
         <Style Selector="Border.section">
             <Setter Property="Margin" Value="0,0,0,16" />
             <Setter Property="Padding" Value="16" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="14" />
             <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
         <Style Selector="TextBlock.heading">
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -57,8 +59,8 @@
                 <StackPanel Spacing="8">
                     <TextBlock Classes="heading" Text="Storage" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Show in File Explorer" Click="OnRevealStorage" />
-                        <Button Content="Delete All Imported Videos…" Click="OnDeleteAll" />
+                        <Button Content="Show in File Explorer" Classes="pill-action" Click="OnRevealStorage" />
+                        <Button Content="Delete All Imported Videos…" Classes="pill-action" Click="OnDeleteAll" />
                     </StackPanel>
                     <TextBlock Classes="footnote"
                                Text="Imported videos are copied into Wallpache's own folder so they keep working if the original is moved or deleted." />

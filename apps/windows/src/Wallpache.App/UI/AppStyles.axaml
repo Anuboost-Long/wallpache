@@ -1,0 +1,161 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <SolidColorBrush x:Key="PillActionHighlightBackground" Color="#E4E4E7" />
+            <SolidColorBrush x:Key="PillActionHighlightBackgroundHover" Color="#D4D4D8" />
+            <SolidColorBrush x:Key="PillActionHighlightForeground" Color="#1F1F1F" />
+
+            <!-- A real shadow only reads against a light backdrop; in dark
+                 mode the same buttons already stand out from the card, so
+                 the shadow there is a zero-opacity no-op instead. -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <DropShadowEffect x:Key="PillActionShadow"
+                                       Color="#40000000"
+                                       BlurRadius="6"
+                                       OffsetX="0"
+                                       OffsetY="1" />
+                    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F3F3F3" />
+                    <SolidColorBrush x:Key="TabSwitcherBackgroundBrush" Color="#59FFFFFF" />
+                    <SolidColorBrush x:Key="TabSwitcherBorderBrush" Color="#59FFFFFF" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <DropShadowEffect x:Key="PillActionShadow"
+                                       Color="Transparent"
+                                       BlurRadius="0"
+                                       OffsetX="0"
+                                       OffsetY="0"
+                                       Opacity="0" />
+                    <!-- A slight gray rather than the FluentTheme default's
+                         near-black, so the window doesn't read as pitch dark. -->
+                    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#2B2B2B" />
+                    <SolidColorBrush x:Key="TabSwitcherBackgroundBrush" Color="#40000000" />
+                    <SolidColorBrush x:Key="TabSwitcherBorderBrush" Color="#26FFFFFF" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!-- Every clickable control shows a hand cursor on hover, matching the
+         hover affordance web UI users expect - Avalonia does not default to
+         this the way a browser does for buttons and links. -->
+    <Style Selector="Button, RadioButton.pill, ComboBox, CheckBox, MenuItem">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <!-- Rounded card surface shared by library tiles, display cards, and
+         settings sections, so every screen reads as one visual system. -->
+    <Style Selector="Border.card">
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- Rounded, muted secondary actions: Apply, Preview, Display… Kept
+         compact so a library card's whole action row fits at three cards per
+         row on a small default window width. -->
+    <Style Selector="Button.pill-action">
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="Button.pill-action:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+    </Style>
+
+    <!-- Apply and Preview stand out from Display/⋯: an explicit light-gray
+         fill rather than the theme's own (much darker, in dark mode) control
+         fill, plus a soft drop shadow that only shows up in light mode, where
+         a flat gray pill otherwise blends into a near-white card. -->
+    <Style Selector="Button.pill-action.emphasized">
+        <Setter Property="Background" Value="{StaticResource PillActionHighlightBackground}" />
+        <Setter Property="Foreground" Value="{StaticResource PillActionHighlightForeground}" />
+        <Setter Property="Effect" Value="{DynamicResource PillActionShadow}" />
+    </Style>
+
+    <Style Selector="Button.pill-action.emphasized:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource PillActionHighlightBackgroundHover}" />
+    </Style>
+
+    <!-- Circular icon-only button, e.g. the "…" more-actions affordance. Sized
+         well past the glyph itself, with a visible resting fill rather than a
+         hover-only one, since a hit target this small is otherwise easy to
+         miss and easy to overlook as clickable in the first place. -->
+    <Style Selector="Button.icon-circle">
+        <Setter Property="Width" Value="38" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="19" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="Button.icon-circle:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+    </Style>
+
+    <!-- Icon-circle variant for sitting on top of a video thumbnail instead of
+         a card background: a fixed dark scrim rather than a theme fill, so it
+         stays legible over any thumbnail color in both light and dark mode. -->
+    <Style Selector="Button.icon-circle.on-image">
+        <Setter Property="Background" Value="#66000000" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="Button.icon-circle.on-image:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#99000000" />
+    </Style>
+
+    <!-- Segmented pill switcher for the top-level Library/Displays/Settings
+         navigation: one capsule with a highlighted selection, rather than a
+         default RadioButton row or tab strip. The checked pill uses the brand
+         wave gradient (instead of the flat theme accent) so the switcher
+         carries the app's identity, with a soft matching glow and an
+         animated cross-fade between tabs. -->
+    <Style Selector="RadioButton.pill">
+        <Setter Property="Padding" Value="18,7" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="PillBackground"
+                        CornerRadius="14"
+                        Background="Transparent"
+                        Padding="{TemplateBinding Padding}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.15" />
+                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="RadioButton.pill:checked /template/ Border#PillBackground">
+        <Setter Property="Background" Value="{DynamicResource BrandWaveBrush}" />
+        <Setter Property="BoxShadow" Value="0 2 12 0 #558A4CFF" />
+    </Style>
+
+    <Style Selector="RadioButton.pill:checked">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="RadioButton.pill:not(:checked):pointerover /template/ Border#PillBackground">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+
+</Styles>

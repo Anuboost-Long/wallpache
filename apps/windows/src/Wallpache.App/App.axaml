@@ -8,6 +8,7 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Wallpache/UI/AppStyles.axaml" />
     </Application.Styles>
 
     <Application.Resources>

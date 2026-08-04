@@ -15,8 +15,7 @@
                 <DataTemplate x:DataType="vm:DisplayItemViewModel">
                     <Border Margin="0,0,0,16"
                             Padding="16"
-                            CornerRadius="10"
-                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                            Classes="card">
                         <StackPanel Spacing="12">
 
                             <!-- Header -->
@@ -94,6 +93,7 @@
                             </StackPanel>
 
                             <Button Content="Remove Wallpaper"
+                                    Classes="pill-action"
                                     HorizontalAlignment="Left"
                                     IsVisible="{Binding HasWallpaper}"
                                     Click="OnRemoveWallpaper" />
