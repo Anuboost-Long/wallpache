@@ -193,6 +193,10 @@ publish/
 # Note: Comment the next line if you want to checkin your web deploy settings,
 # but database connection strings (with potential passwords) will be unencrypted
 *.pubxml
+# Wallpache.App's FolderProfile.pubxml holds no secrets - just the
+# self-contained win-x64 settings the BuildInstaller csproj target needs -
+# and must be shared so Visual Studio's Publish button works out of the box.
+!src/Wallpache.App/Properties/PublishProfiles/FolderProfile.pubxml
 *.publishproj
 
 # Microsoft Azure Web App publish settings. Comment the next line if you want to

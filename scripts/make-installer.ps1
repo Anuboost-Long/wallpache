@@ -3,33 +3,49 @@
   Builds a distributable Wallpache Setup.exe and places it in dist/.
 
 .DESCRIPTION
-  Publishes the Windows app self-contained for win-x64 (so a user does not
-  need the .NET runtime installed separately), then compiles
-  Scripts/wallpache-installer.iss with Inno Setup's ISCC into a single
+  Publishes the Windows app via its FolderProfile (self-contained win-x64, so
+  a user does not need the .NET runtime installed separately - see
+  Properties/PublishProfiles/FolderProfile.pubxml for the actual settings,
+  the one place they're defined), then compiles
+  scripts/wallpache-installer.iss with Inno Setup's ISCC into a single
   installer executable.
 
-  Mirrors Scripts/make-dmg.sh on the macOS side: same dist/ output location,
+  Mirrors scripts/make-dmg.sh on the macOS side: same dist/ output location,
   same "build once, package once" shape.
 
 .PARAMETER Version
   Overrides the version baked into the installer's filename and metadata.
   Defaults to the <Version> already set in Wallpache.App.csproj.
 
+.PARAMETER PublishDir
+  Where the self-contained build lives (or should be written). Defaults to
+  apps\windows\build\publish.
+
+.PARAMETER SkipPublish
+  Skips the `dotnet publish` step and compiles the installer directly from an
+  existing PublishDir. Used by Wallpache.App.csproj's BuildInstaller target,
+  which runs this after MSBuild's own Publish step has already produced that
+  output - so the app is never published twice.
+
 .EXAMPLE
-  Scripts\make-installer.ps1
+  scripts\make-installer.ps1
 .EXAMPLE
-  Scripts\make-installer.ps1 -Version 1.2.0
+  scripts\make-installer.ps1 -Version 1.2.0
 #>
 [CmdletBinding()]
 param(
-    [string]$Version
+    [string]$Version,
+    [string]$PublishDir,
+    [switch]$SkipPublish
 )
 
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $Project = Join-Path $RepoRoot "apps\windows\src\Wallpache.App\Wallpache.App.csproj"
-$PublishDir = Join-Path $RepoRoot "apps\windows\build\publish"
+if (-not $PublishDir) {
+    $PublishDir = Join-Path $RepoRoot "apps\windows\build\publish"
+}
 $DistDir = Join-Path $RepoRoot "dist"
 $IssScript = Join-Path $PSScriptRoot "wallpache-installer.iss"
 
@@ -41,20 +57,30 @@ if (-not $Version) {
     $Version = $Matches[1]
 }
 
-Write-Host "==> Publishing Wallpache $Version (win-x64, self-contained)"
-if (Test-Path $PublishDir) {
-    Remove-Item $PublishDir -Recurse -Force
-}
+if ($SkipPublish) {
+    Write-Host "==> Skipping publish, using existing build at $PublishDir"
+    if (-not (Test-Path $PublishDir)) {
+        throw "PublishDir $PublishDir does not exist; omit -SkipPublish to publish first."
+    }
+} else {
+    Write-Host "==> Publishing Wallpache $Version (via FolderProfile)"
+    if (Test-Path $PublishDir) {
+        Remove-Item $PublishDir -Recurse -Force
+    }
 
-dotnet publish $Project `
-    -c Release `
-    -r win-x64 `
-    --self-contained true `
-    -p:PublishSingleFile=false `
-    -p:Version=$Version `
-    -o $PublishDir
-if ($LASTEXITCODE -ne 0) {
-    throw "dotnet publish failed with exit code $LASTEXITCODE"
+    # SkipInstallerBuild=true because this script does the ISCC compile
+    # itself below - without it, Wallpache.App.csproj's BuildInstaller
+    # target would also fire (it hooks the same Publish target VS's
+    # Publish button uses) and compile the installer a second time.
+    dotnet publish $Project `
+        -c Release `
+        -p:PublishProfile=FolderProfile `
+        -p:Version=$Version `
+        -p:SkipInstallerBuild=true `
+        -o $PublishDir
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet publish failed with exit code $LASTEXITCODE"
+    }
 }
 
 Write-Host "==> Locating Inno Setup compiler"

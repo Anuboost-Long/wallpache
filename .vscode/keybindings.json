@@ -1,0 +1,12 @@
+// Workspace keybindings for wallpache.
+// Ctrl+Alt+I runs the "windows: build installer (Setup.exe)" task from
+// tasks.json directly - skips the task picker and, more importantly, skips
+// C# Dev Kit's own Publish command, which manages its own profile and
+// doesn't reliably use Properties/PublishProfiles/FolderProfile.pubxml.
+[
+    {
+        "key": "ctrl+alt+i",
+        "command": "workbench.action.tasks.runTask",
+        "args": "windows: build installer (Setup.exe)"
+    }
+]

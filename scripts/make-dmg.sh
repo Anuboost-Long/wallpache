@@ -3,12 +3,12 @@
 # Builds a distributable macOS Wallpache.app and packages it into dist/.
 #
 # Usage:
-#   Scripts/make-dmg.sh                      # auto-detects the best identity
-#   APP_ONLY=1 Scripts/make-dmg.sh           # signed .app only, for an external packager
-#   SIGN_IDENTITY="Wallpache Dev" Scripts/make-dmg.sh   # self-signed cert
-#   SIGN_IDENTITY="Developer ID Application: Name (TEAMID)" NOTARIZE=1 Scripts/make-dmg.sh
+#   scripts/make-dmg.sh                      # auto-detects the best identity
+#   APP_ONLY=1 scripts/make-dmg.sh           # signed .app only, for an external packager
+#   SIGN_IDENTITY="Wallpache Dev" scripts/make-dmg.sh   # self-signed cert
+#   SIGN_IDENTITY="Developer ID Application: Name (TEAMID)" NOTARIZE=1 scripts/make-dmg.sh
 #
-# Settings can also live in Scripts/signing.env (gitignored, see
+# Settings can also live in scripts/signing.env (gitignored, see
 # signing.env.example) so a release does not need a long command line.
 #
 # Ad-hoc and self-signed builds do NOT pass Gatekeeper. Because a downloaded
@@ -29,7 +29,7 @@ APP="$BUILD_DIR/Build/Products/Release/Wallpache.app"
 # Installer window styling. The backdrop is optional: without it the window is
 # still icon view, still the right size, still has the two icons placed — just
 # no artwork behind them. Regenerate it with:
-#   swift Scripts/make-dmg-background.swift assets/dmg-background.png
+#   swift scripts/make-dmg-background.swift assets/dmg-background.png
 DMG_BACKGROUND="${DMG_BACKGROUND:-$REPO_ROOT/assets/dmg-background.png}"
 # HFS+ caps a volume name at 27 characters and hdiutil fails rather than
 # truncating one that is too long.
@@ -37,10 +37,10 @@ VOLUME_NAME="Wallpache"
 
 # Optional local config so release settings are not retyped every time. It is
 # gitignored: the identity name is machine-specific, not a project constant.
-CONFIG="$REPO_ROOT/Scripts/signing.env"
+CONFIG="$REPO_ROOT/scripts/signing.env"
 if [ -f "$CONFIG" ]; then
   echo "==> Loading $CONFIG"
-  # Saved and restored so a one-off `SIGN_IDENTITY=... Scripts/make-dmg.sh`
+  # Saved and restored so a one-off `SIGN_IDENTITY=... scripts/make-dmg.sh`
   # still overrides the file rather than the other way round.
   ENV_SIGN_IDENTITY="${SIGN_IDENTITY:-}"
   ENV_NOTARIZE="${NOTARIZE:-}"

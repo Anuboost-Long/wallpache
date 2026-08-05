@@ -36,4 +36,26 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
+
+  <!-- Wraps the just-published self-contained win-x64 output into a
+       WallpacheSetup-<Version>.exe via Inno Setup, so clicking "Publish" in
+       Visual Studio (or `dotnet publish` with these same properties) produces
+       an installer, not just a folder of files. Reuses that output instead of
+       publishing again: see scripts\make-installer.ps1's -SkipPublish. -->
+  <Target Name="BuildInstaller" AfterTargets="Publish"
+          Condition="'$(OS)' == 'Windows_NT' And '$(SelfContained)' == 'true' And '$(RuntimeIdentifier)' == 'win-x64' And '$(SkipInstallerBuild)' != 'true'">
+    <!-- PublishDir from a .pubxml (e.g. FolderProfile's "..\..\build\publish\")
+         stays relative, unlike -o on the CLI which MSBuild normalizes to an
+         absolute path. Inno Setup resolves a relative /DSourceDir against the
+         .iss file's own folder, not this one, so an unresolved relative path
+         here silently compiles an installer with zero files in it. Resolve to
+         absolute against the project directory first, then TrimEnd the
+         trailing "\" - left in place, it would escape the closing quote on
+         the command line below and run the whole argument list together. -->
+    <PropertyGroup>
+      <_InstallerSourceDir>$([System.IO.Path]::GetFullPath('$([System.IO.Path]::Combine($(MSBuildProjectDirectory), $(PublishDir)))'))</_InstallerSourceDir>
+      <_InstallerSourceDir>$(_InstallerSourceDir.TrimEnd('\'))</_InstallerSourceDir>
+    </PropertyGroup>
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\..\..\scripts\make-installer.ps1&quot; -Version $(Version) -PublishDir &quot;$(_InstallerSourceDir)&quot; -SkipPublish" />
+  </Target>
 </Project>

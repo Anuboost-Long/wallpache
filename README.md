@@ -198,7 +198,7 @@ Wallpache/
 │   └── mobile/      placeholder, not yet implemented
 ├── shared/          branding, icons, schemas, sample videos
 ├── docs/            implementation notes
-├── Scripts/         install and release tooling
+├── scripts/         install and release tooling
 └── dist/            build output (gitignored)
 ```
 
@@ -264,7 +264,7 @@ own; everything flows through `WallpaperCoordinator`.
 ```bash
 git clone https://github.com/Anuboost-Long/wallpache.git
 cd wallpache
-APP_ONLY=1 Scripts/make-dmg.sh
+APP_ONLY=1 scripts/make-dmg.sh
 ```
 
 The app is written to `dist/Wallpache.app`. Copy it into `/Applications` and
@@ -290,18 +290,18 @@ xcodebuild -project apps/macos/Wallpache.xcodeproj -scheme Wallpache test
 
 ## Releasing
 
-`Scripts/make-dmg.sh` builds a universal Release binary, strips the
+`scripts/make-dmg.sh` builds a universal Release binary, strips the
 `get-task-allow` entitlement that would make the app unlaunchable on other Macs,
 re-signs, and packages a `.zip` and a `.dmg` into `dist/`.
 
 ```bash
-Scripts/make-dmg.sh              # zip + dmg
-APP_ONLY=1 Scripts/make-dmg.sh   # just the signed .app
+scripts/make-dmg.sh              # zip + dmg
+APP_ONLY=1 scripts/make-dmg.sh   # just the signed .app
 ```
 
 It picks a signing identity on its own: a **Developer ID Application**
 certificate if the keychain has one, otherwise an ad-hoc signature. To pin the
-settings, copy `Scripts/signing.env.example` to `Scripts/signing.env` (which is
+settings, copy `scripts/signing.env.example` to `scripts/signing.env` (which is
 gitignored) and fill it in.
 
 ### Shipping without the "damaged" warning
@@ -318,8 +318,8 @@ That needs a paid Apple Developer Program membership:
      --password <app-specific-password>
    ```
 
-3. Set `NOTARIZE=1` in `Scripts/signing.env`.
-4. Run `Scripts/make-dmg.sh`.
+3. Set `NOTARIZE=1` in `scripts/signing.env`.
+4. Run `scripts/make-dmg.sh`.
 
 The script notarizes and staples the app *before* packaging, then notarizes the
 disk image, so both the `.dmg` and the copy dragged out of it open cleanly —
@@ -352,19 +352,19 @@ Create an empty public repo named `wallpache-dist`, then:
 ```bash
 git clone https://github.com/Anuboost-Long/wallpache-dist.git
 cd wallpache-dist
-cp /path/to/wallpache/Scripts/install.sh .
+cp /path/to/wallpache/scripts/install.sh .
 cp /path/to/wallpache/dist-repo/README.md .
 chmod +x install.sh
 git add . && git commit -m "Installer and readme" && git push
 ```
 
-`dist-repo/` in this repo holds the public README. `Scripts/install.sh` is
+`dist-repo/` in this repo holds the public README. `scripts/install.sh` is
 copied over verbatim — it already points at `wallpache-dist`, so it needs no
 edits between the two repos.
 
 ### Publishing a release
 
-1. `Scripts/make-dmg.sh`
+1. `scripts/make-dmg.sh`
 2. Create a release on **`wallpache-dist`** — not on this repo.
 3. Attach both `dist/Wallpache.zip` and `dist/Wallpache.dmg`.
 

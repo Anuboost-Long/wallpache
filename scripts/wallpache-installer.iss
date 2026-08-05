@@ -1,9 +1,9 @@
 ; Inno Setup script for Wallpache (Windows).
 ;
-; Not run directly - Scripts\make-installer.ps1 publishes the app first and
+; Not run directly - scripts\make-installer.ps1 publishes the app first and
 ; passes SourceDir/AppVersion in via /D defines, then invokes ISCC on this
 ; file. To iterate on the script alone against an existing publish output:
-;   iscc /DSourceDir="apps\windows\build\publish" /DAppVersion="1.0.0" Scripts\wallpache-installer.iss
+;   iscc /DSourceDir="apps\windows\build\publish" /DAppVersion="1.0.0" scripts\wallpache-installer.iss
 ;
 #ifndef SourceDir
   #define SourceDir "..\apps\windows\build\publish"

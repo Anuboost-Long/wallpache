@@ -3,9 +3,9 @@
 // Draws the backdrop for the installer window.
 //
 // Run once and commit the result; the release script only reads the PNG:
-//   swift Scripts/make-dmg-background.swift assets/dmg-background.png
+//   swift scripts/make-dmg-background.swift assets/dmg-background.png
 //
-// The geometry mirrors the window Scripts/make-dmg.sh asks Finder for. The two
+// The geometry mirrors the window scripts/make-dmg.sh asks Finder for. The two
 // icon centres below have to match the fractions in that script, or the arrow
 // ends up pointing at nothing.
 

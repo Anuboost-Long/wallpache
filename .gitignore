@@ -4,10 +4,10 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 
-# Release artifacts produced by Scripts/make-dmg.sh
+# Release artifacts produced by scripts/make-dmg.sh
 dist/
 
-# Local signing config (see Scripts/signing.env.example)
-Scripts/signing.env
+# Local signing config (see scripts/signing.env.example)
+scripts/signing.env
 
 .DS_Store
