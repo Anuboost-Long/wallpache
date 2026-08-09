@@ -11,6 +11,12 @@ type ButtonLinkProps = Readonly<{
   variant?: Variant;
   size?: Size;
   className?: string;
+  /**
+   * File downloads (release assets, etc). Skips `target="_blank"` so the
+   * browser just downloads in place instead of opening — and leaving behind
+   * — a blank tab on github.com.
+   */
+  download?: boolean;
 }>;
 
 const variantClasses: Record<Variant, string> = {
@@ -44,6 +50,7 @@ export function ButtonLink({
   variant = "solid",
   size = "md",
   className,
+  download = false,
 }: ButtonLinkProps) {
   const isExternal = href.startsWith("http");
 
@@ -58,7 +65,9 @@ export function ButtonLink({
         sizeClasses[size],
         className,
       )}
-      {...(isExternal && { target: "_blank", rel: "noopener noreferrer" })}
+      {...(download
+        ? { download: true }
+        : isExternal && { target: "_blank", rel: "noopener noreferrer" })}
     >
       {children}
     </Link>

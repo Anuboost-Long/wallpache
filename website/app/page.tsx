@@ -1,3 +1,4 @@
+import { Donate } from "@/components/sections/Donate";
 import { Download } from "@/components/sections/Download";
 import { Features } from "@/components/sections/Features";
 import { FinalCta } from "@/components/sections/FinalCta";
@@ -11,6 +12,7 @@ export default function Home() {
       <Features />
       <HowItWorks />
       <Download />
+      <Donate />
       <FinalCta />
     </>
   );

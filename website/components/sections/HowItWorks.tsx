@@ -24,7 +24,7 @@ export function HowItWorks() {
                 <span className="absolute -top-4 left-7 inline-flex size-9 items-center justify-center rounded-xl bg-[linear-gradient(140deg,var(--color-amber),var(--color-pink))] text-sm font-bold text-ink shadow-lg">
                   {index + 1}
                 </span>
-                <h3 className="text-lg font-semibold tracking-tight">
+                <h3 className="font-heading text-lg font-semibold tracking-tight">
                   {step.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-pretty text-white/60">

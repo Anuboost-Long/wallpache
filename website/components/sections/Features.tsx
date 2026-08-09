@@ -29,7 +29,7 @@ function FeatureCard({ feature }: FeatureCardProps) {
         <Icon className="size-6" />
       </span>
 
-      <h3 className="relative mt-5 text-xl font-semibold tracking-tight">
+      <h3 className="font-heading relative mt-5 text-xl font-semibold tracking-tight">
         {feature.title}
       </h3>
       <p className="relative mt-2.5 leading-relaxed text-pretty text-white/60">

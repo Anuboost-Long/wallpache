@@ -12,6 +12,7 @@ type PlatformCardProps = Readonly<{
   name: string;
   requirements: string;
   cta: string;
+  href: string;
   children: ReactNode;
   note: ReactNode;
 }>;
@@ -21,6 +22,7 @@ function PlatformCard({
   name,
   requirements,
   cta,
+  href,
   children,
   note,
 }: PlatformCardProps) {
@@ -31,12 +33,12 @@ function PlatformCard({
           <Icon className="size-7 text-white/90" />
         </span>
         <div>
-          <h3 className="text-2xl font-semibold tracking-tight">{name}</h3>
+          <h3 className="font-heading text-2xl font-semibold tracking-tight">{name}</h3>
           <p className="text-sm text-white/50">{requirements}</p>
         </div>
       </header>
 
-      <ButtonLink href={site.latestRelease} size="lg" className="mt-7 w-full">
+      <ButtonLink href={href} download size="lg" className="mt-7 w-full">
         <DownloadIcon className="size-5" />
         {cta}
       </ButtonLink>
@@ -75,6 +77,7 @@ export function Download() {
               name="macOS"
               requirements="Ventura 13.0 or later · Universal"
               cta="Download Wallpache.dmg"
+              href={site.macDownload}
               note={
                 <>
                   The one-line installer clears the quarantine flag for you —
@@ -98,6 +101,7 @@ export function Download() {
               name="Windows"
               requirements="Windows 10 (2004) & 11 · x64"
               cta="Download for Windows"
+              href={site.windowsDownload}
               note="Pauses on sleep and lock, and puts itself back together if Explorer restarts."
             >
               <p className="mb-3 text-xs font-medium tracking-[0.14em] text-white/40 uppercase">
@@ -120,7 +124,7 @@ export function Download() {
 
         <Reveal className="mt-5">
           <div className="glass glass-rim relative rounded-3xl p-7 sm:p-8">
-            <h3 className="text-lg font-semibold tracking-tight">
+            <h3 className="font-heading text-lg font-semibold tracking-tight">
               ⚠️ macOS says the app is “damaged”?
             </h3>
             <p className="mt-2.5 max-w-3xl leading-relaxed text-pretty text-white/60">

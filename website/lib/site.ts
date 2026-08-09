@@ -18,10 +18,31 @@ export const site = {
     "curl -fsSL https://raw.githubusercontent.com/Anuboost-Long/wallpache-dist/main/install.sh | bash",
   quarantineCommand:
     "xattr -dr com.apple.quarantine /Applications/Wallpache.app",
+  /**
+   * Direct asset links via GitHub's `/releases/latest/download/<name>` alias,
+   * which always resolves to whatever the current release attached under that
+   * exact filename — no version number to keep in sync here. The macOS build
+   * has always published under this fixed name; the Windows release additionally
+   * uploads an unversioned `WallpacheSetup.exe` copy of the installer solely so
+   * this link keeps working release over release.
+   */
+  macDownload:
+    "https://github.com/Anuboost-Long/wallpache-dist/releases/latest/download/Wallpache.dmg",
+  windowsDownload:
+    "https://github.com/Anuboost-Long/wallpache-dist/releases/latest/download/WallpacheSetup.exe",
+  /** Legal owner named in the copyright notice, Terms, and Privacy Policy. */
+  copyrightHolder: "Anuboost-Long",
+  legalEmail: "kimlongly57@gmail.com",
 } as const;
 
 export const navLinks = [
   { href: "#features", label: "Features" },
   { href: "#how", label: "How it works" },
   { href: "#download", label: "Download" },
+  { href: "#donate", label: "Donate" },
+] as const;
+
+export const legalLinks = [
+  { href: "/terms", label: "Terms of Service" },
+  { href: "/privacy", label: "Privacy Policy" },
 ] as const;

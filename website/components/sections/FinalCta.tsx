@@ -21,7 +21,7 @@ export function FinalCta() {
               className="animate-bob relative mx-auto rounded-[26px] drop-shadow-2xl"
             />
 
-            <h2 className="relative mt-7 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+            <h2 className="font-heading relative mt-7 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
               Go on — make the desktop{" "}
               <span className="text-gradient">fun again.</span>
             </h2>

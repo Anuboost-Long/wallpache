@@ -120,6 +120,17 @@ export function FrameIcon(props: IconProps) {
   );
 }
 
+export function HeartIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden {...props}>
+      <path
+        d="M12 20.2s-7.5-4.4-9.8-9C.6 7.7 2.3 4 5.8 3.5c2-.3 3.9.7 6.2 3.1 2.3-2.4 4.2-3.4 6.2-3.1 3.5.5 5.2 4.2 3.6 7.7-2.3 4.6-9.8 9-9.8 9Z"
+        {...line}
+      />
+    </svg>
+  );
+}
+
 export function ShieldIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden {...props}>

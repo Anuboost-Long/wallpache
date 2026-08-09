@@ -30,7 +30,7 @@ export function SiteHeader() {
       >
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2.5 text-[1.05rem] font-semibold tracking-tight"
+          className="font-heading flex shrink-0 items-center gap-2.5 text-[1.05rem] font-semibold tracking-tight"
         >
           <Image
             src="/wave-mark.png"

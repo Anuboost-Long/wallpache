@@ -7,16 +7,16 @@
 
 <h1>Wallpache</h1>
 
-<p><strong>Live video wallpapers for macOS.</strong></p>
+<p><strong>Live video wallpapers for macOS and Windows.</strong></p>
 
 <p>
 Import an <code>.mp4</code>, <code>.mov</code>, or <code>.m4v</code> and it loops behind your desktop icons —<br>
-per display, at the scale you choose, paused whenever your Mac needs the battery.
+per display, at the scale you choose, paused whenever your machine needs the battery.
 </p>
 
 <p>
 <img src="https://img.shields.io/badge/macOS-13.0%2B-7C5CD6?style=for-the-badge&logo=apple&logoColor=white" alt="macOS 13.0+">
-<img src="https://img.shields.io/badge/Swift-SwiftUI-FF7A45?style=for-the-badge&logo=swift&logoColor=white" alt="SwiftUI">
+<img src="https://img.shields.io/badge/Windows-10%20%2F%2011-4CC9F0?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11">
 <img src="https://img.shields.io/badge/Universal-Silicon%20%2B%20Intel-FFB347?style=for-the-badge" alt="Universal binary">
 <img src="https://img.shields.io/badge/Source-Private-2B2247?style=for-the-badge&logo=github&logoColor=white" alt="Private source">
 </p>
@@ -44,12 +44,12 @@ per display, at the scale you choose, paused whenever your Mac needs the battery
 
 ## Requirements
 
-| | |
-|---|---|
-| macOS | 13.0 Ventura or later |
-| Architecture | Universal — Apple Silicon and Intel |
-| Video formats | `.mp4`, `.mov`, `.m4v` |
-| To build | Xcode 16.3 or later |
+| | macOS | Windows |
+|---|---|---|
+| OS version | 13.0 Ventura or later | Windows 10 (2004) or later, and 11 |
+| Architecture | Universal — Apple Silicon and Intel | x64 |
+| Video formats | `.mp4`, `.mov`, `.m4v` | `.mp4`, `.mov`, `.m4v` |
+| To build | Xcode 16.3 or later | .NET SDK 9, Inno Setup 6 (for the installer) |
 
 ---
 
@@ -193,8 +193,8 @@ you pick yourself.
 ```
 Wallpache/
 ├── apps/
-│   ├── macos/       native macOS app (the shipping product)
-│   ├── windows/     placeholder, not yet implemented
+│   ├── macos/       native macOS app (Swift/SwiftUI)
+│   ├── windows/     native Windows app (Avalonia/.NET)
 │   └── mobile/      placeholder, not yet implemented
 ├── shared/          branding, icons, schemas, sample videos
 ├── docs/            implementation notes
@@ -326,6 +326,23 @@ disk image, so both the `.dmg` and the copy dragged out of it open cleanly —
 including on a machine that is offline. The Gatekeeper line at the end prints
 `accepted` when the build is genuinely shippable.
 
+### Building the Windows installer
+
+`scripts/make-installer.ps1` publishes a self-contained `win-x64` build (no
+.NET runtime required on the target machine) and compiles it into a single
+`WallpacheSetup-<version>.exe` with Inno Setup, mirroring `make-dmg.sh`'s
+"build once, package once" shape:
+
+```powershell
+scripts\make-installer.ps1
+```
+
+Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+(`winget install --id JRSoftware.InnoSetup -e`). The installer is unsigned, so
+Windows SmartScreen will warn on first run for an unrecognised publisher — the
+same caveat the macOS build documents above for an unnotarized `.app`, until a
+code-signing certificate is in place.
+
 ---
 
 ## Distribution model
@@ -364,12 +381,15 @@ edits between the two repos.
 
 ### Publishing a release
 
-1. `scripts/make-dmg.sh`
+1. `scripts/make-dmg.sh` (macOS) and `scripts\make-installer.ps1` (Windows).
 2. Create a release on **`wallpache-dist`** — not on this repo.
-3. Attach both `dist/Wallpache.zip` and `dist/Wallpache.dmg`.
+3. Attach `dist/Wallpache.zip`, `dist/Wallpache.dmg`, and
+   `dist/WallpacheSetup-<version>.exe` to the same release.
 
-The installer fetches `Wallpache.zip` from the latest release, so that exact
-filename has to be attached or the one-liner breaks.
+The macOS installer fetches `Wallpache.zip` from the latest release by that
+exact filename, so it has to be attached or the one-liner breaks. The Windows
+`.exe` has no such script — the download link on the website and the dist repo
+README just point at the release page.
 
 > Once source is pushed to a public repo it cannot be taken back — history,
 > forks, and caches persist. Keep this repo private from the first push.

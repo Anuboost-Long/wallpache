@@ -21,7 +21,7 @@ export function Hero() {
             macOS &amp; Windows · free · no account
           </span>
 
-          <h1 className="mt-6 text-5xl leading-[1.02] font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+          <h1 className="font-heading mt-6 text-5xl leading-[1.02] font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
             Your wallpaper{" "}
             <span className="text-gradient">should move.</span>
           </h1>

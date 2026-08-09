@@ -17,6 +17,7 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-bricolage);
 
   --animate-drift: drift 26s ease-in-out infinite;
   --animate-drift-slow: drift 38s ease-in-out infinite reverse;

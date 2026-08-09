@@ -7,15 +7,16 @@
 
 <h1>Wallpache</h1>
 
-<p><strong>Live video wallpapers for macOS.</strong></p>
+<p><strong>Live video wallpapers for macOS and Windows.</strong></p>
 
 <p>
 Drop in a video and it loops behind your desktop icons —<br>
-per display, at the scale you choose, paused whenever your Mac needs the battery.
+per display, at the scale you choose, paused whenever your machine needs the battery.
 </p>
 
 <p>
 <img src="https://img.shields.io/badge/macOS-13.0%2B-7C5CD6?style=for-the-badge&logo=apple&logoColor=white" alt="macOS 13.0+">
+<img src="https://img.shields.io/badge/Windows-10%20%2F%2011-4CC9F0?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10/11">
 <img src="https://img.shields.io/badge/Universal-Silicon%20%2B%20Intel-FF7A45?style=for-the-badge" alt="Universal binary">
 <a href="https://github.com/Anuboost-Long/wallpache-dist/releases"><img src="https://img.shields.io/badge/Download-Latest%20Release-FFB347?style=for-the-badge&logo=github&logoColor=white" alt="Download"></a>
 </p>
@@ -25,6 +26,8 @@ per display, at the scale you choose, paused whenever your Mac needs the battery
 ---
 
 ## ⚡ Install
+
+### macOS
 
 One line in Terminal:
 
@@ -69,6 +72,16 @@ INSTALL_DIR="$HOME/Applications" bash -c "$(curl -fsSL https://raw.githubusercon
 
 </details>
 
+### Windows
+
+1. Download `WallpacheSetup-<version>.exe` from [Releases](https://github.com/Anuboost-Long/wallpache-dist/releases).
+2. Run it. No admin rights needed — it installs to your user profile.
+3. Windows SmartScreen will likely warn about an unrecognised publisher the
+   first time — see [below](#️-if-windows-says-the-publisher-is-unknown) for why
+   that's expected.
+4. Wallpache launches automatically after install, and lives in the system tray
+   from then on.
+
 ---
 
 ## ✨ What it does
@@ -87,8 +100,8 @@ One wallpaper everywhere, or a different one on each.
 
 ### 🔋 Never costs you battery
 
-Playback stops in Low Power Mode, under thermal pressure, on a locked screen,
-and while the Mac sleeps. Every trigger is a toggle.
+Playback stops on battery saver, a locked screen, and while the machine sleeps.
+On Windows it also survives an Explorer restart without leaving a blank desktop.
 
 </td>
 </tr>
@@ -98,7 +111,8 @@ and while the Mac sleeps. Every trigger is a toggle.
 ### 🖱 Invisible to your clicks
 
 The wallpaper sits below your icons and passes every click straight through to
-the desktop. It never keeps your display awake.
+the desktop. It never keeps your display awake, and stays out of Alt+Tab and
+the taskbar.
 
 </td>
 <td width="50%" valign="top">
@@ -118,11 +132,11 @@ original video later won't break anything.
 
 | | |
 |:--:|---|
-| **1** | **Open Wallpache.** The library window opens by itself the first time. After that, reach it from the menu-bar icon. |
+| **1** | **Open Wallpache.** The library window opens by itself the first time. After that, reach it from the menu-bar icon (macOS) or tray icon (Windows). |
 | **2** | **Add a video.** Drag an `.mp4`, `.mov`, or `.m4v` onto the window, or press **Import Video…** |
 | **3** | **Preview it** to check the loop before you commit to it. |
 | **4** | **Apply it.** **Apply** covers every display, or use the **Display** menu on the tile for one screen at a time. |
-| **5** | *Optional* — turn on **Launch at login** in Settings → Startup. |
+| **5** | *Optional* — turn on **Launch at login** (macOS) or **Launch at sign-in** (Windows) in Settings → Startup. |
 
 ---
 
@@ -141,10 +155,11 @@ original video later won't break anything.
 
 Wallpache stops rather than burn battery on frames nobody is looking at:
 
-`Low Power Mode` &nbsp;·&nbsp; `Thermal pressure` &nbsp;·&nbsp; `Screen locked` &nbsp;·&nbsp; `Mac asleep`
+`Low Power Mode / Battery Saver` &nbsp;·&nbsp; `Thermal pressure (macOS)` &nbsp;·&nbsp; `Screen locked` &nbsp;·&nbsp; `Machine asleep`
 
-The menu bar always names the current state — *Paused in Low Power Mode*,
-*Paused while the Mac is hot* — so a stopped wallpaper is never a mystery.
+The menu bar / tray icon always names the current state — *Paused in Low Power
+Mode*, *Paused while the Mac is hot* — so a stopped wallpaper is never a
+mystery.
 
 ---
 
@@ -166,9 +181,21 @@ xattr -dr com.apple.quarantine /Applications/Wallpache.app
 > 💡 The one-line installer does this for you — which is exactly why it's the
 > recommended route.
 
+## ⚠️ If Windows says the publisher is unknown
+
+> **Windows protected your PC — Microsoft Defender SmartScreen prevented an
+> unrecognised app from starting.**
+
+**Your download is fine.** Wallpache isn't yet signed with a paid code-signing
+certificate, so Windows has no publisher identity to vouch for. Click **More
+info**, then **Run anyway**. This is the same trust gap the macOS build
+documents above — just Windows' version of the warning.
+
 ---
 
 ## 📁 Where your files go
+
+**macOS**
 
 ```
 ~/Library/Application Support/Wallpache/
@@ -177,21 +204,38 @@ xattr -dr com.apple.quarantine /Applications/Wallpache.app
 └── stills/       preview frames
 ```
 
-Settings → Storage has **Show in Finder** and **Delete All Imported Videos…**.
-Removing a wallpaper returns that display to its normal macOS wallpaper.
+**Windows**
 
-Wallpache runs in the App Sandbox and asks for read-only access only to the files
-you pick yourself.
+```
+%LOCALAPPDATA%\Wallpache\
+├── Wallpapers\   imported copies of your videos
+├── Thumbnails\   library grid thumbnails
+└── Stills\       preview frames
+```
+
+Settings → Storage has **Show in Finder / Explorer** and **Delete All Imported
+Videos…**. Removing a wallpaper returns that display to its normal desktop
+wallpaper.
+
+On macOS, Wallpache runs in the App Sandbox and asks for read-only access only
+to the files you pick yourself.
 
 <details>
 <summary><b>Uninstall</b></summary>
 
 <br>
 
+**macOS**
+
 ```bash
 rm -rf /Applications/Wallpache.app
 rm -rf ~/Library/Application\ Support/Wallpache
 ```
+
+**Windows** — use **Settings → Apps**, or the **Uninstall Wallpache** shortcut
+the installer adds to the Start menu. It removes the app and its startup
+registration; your imported videos under `%LOCALAPPDATA%\Wallpache` are left in
+place.
 
 </details>
 
@@ -199,11 +243,11 @@ rm -rf ~/Library/Application\ Support/Wallpache
 
 ## 📋 Requirements
 
-| | |
-|---|---|
-| **macOS** | 13.0 Ventura or later |
-| **Architecture** | Universal — Apple Silicon and Intel |
-| **Formats** | `.mp4` &nbsp; `.mov` &nbsp; `.m4v` |
+| | macOS | Windows |
+|---|---|---|
+| **OS version** | 13.0 Ventura or later | Windows 10 (2004) or later, and 11 |
+| **Architecture** | Universal — Apple Silicon and Intel | x64 |
+| **Formats** | `.mp4` &nbsp; `.mov` &nbsp; `.m4v` | `.mp4` &nbsp; `.mov` &nbsp; `.m4v` |
 
 ---
 
