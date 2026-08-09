@@ -122,22 +122,40 @@ export function Download() {
           </Reveal>
         </div>
 
-        <Reveal className="mt-5">
-          <div className="glass glass-rim relative rounded-3xl p-7 sm:p-8">
-            <h3 className="font-heading text-lg font-semibold tracking-tight">
-              ⚠️ macOS says the app is “damaged”?
-            </h3>
-            <p className="mt-2.5 max-w-3xl leading-relaxed text-pretty text-white/60">
-              Your download is fine. Wallpache is signed ad-hoc rather than with a
-              paid Apple Developer ID certificate, and macOS reports that as damage
-              for anything arriving through a browser. Clear the flag once:
-            </p>
-            <CopyCommand
-              command={site.quarantineCommand}
-              className="mt-5 max-w-2xl"
-            />
-          </div>
-        </Reveal>
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <Reveal className="h-full">
+            <div className="glass glass-rim relative flex h-full flex-col rounded-3xl p-7 sm:p-8">
+              <h3 className="font-heading text-lg font-semibold tracking-tight">
+                ⚠️ macOS says the app is “damaged”?
+              </h3>
+              <p className="mt-2.5 leading-relaxed text-pretty text-white/60">
+                Your download is fine. Wallpache is signed ad-hoc rather than with a
+                paid Apple Developer ID certificate, and macOS reports that as damage
+                for anything arriving through a browser. Clear the flag once:
+              </p>
+              <CopyCommand
+                command={site.quarantineCommand}
+                className="mt-5"
+              />
+            </div>
+          </Reveal>
+
+          <Reveal delay={110} className="h-full">
+            <div className="glass glass-rim relative flex h-full flex-col rounded-3xl p-7 sm:p-8">
+              <h3 className="font-heading text-lg font-semibold tracking-tight">
+                ⚠️ Windows says the publisher is unknown?
+              </h3>
+              <p className="mt-2.5 leading-relaxed text-pretty text-white/60">
+                Your download is fine. Wallpache isn&apos;t yet signed with a paid
+                code-signing certificate, so Windows has no publisher identity to
+                vouch for and shows a SmartScreen warning. Click{" "}
+                <span className="text-white/80">More info</span>, then{" "}
+                <span className="text-white/80">Run anyway</span> — the same trust
+                gap as the macOS warning, just Windows&apos; version of it.
+              </p>
+            </div>
+          </Reveal>
+        </div>
       </div>
     </section>
   );
