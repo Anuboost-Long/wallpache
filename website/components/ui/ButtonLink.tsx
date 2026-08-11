@@ -17,6 +17,8 @@ type ButtonLinkProps = Readonly<{
    * — a blank tab on github.com.
    */
   download?: boolean;
+  /** For in-page links that also have to dismiss the surface they live in. */
+  onClick?: () => void;
 }>;
 
 const variantClasses: Record<Variant, string> = {
@@ -51,12 +53,14 @@ export function ButtonLink({
   size = "md",
   className,
   download = false,
+  onClick,
 }: ButtonLinkProps) {
   const isExternal = href.startsWith("http");
 
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={clsx(
         "inline-flex items-center justify-center rounded-full whitespace-nowrap",
         "transition duration-300 outline-none",

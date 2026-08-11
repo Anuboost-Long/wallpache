@@ -63,13 +63,13 @@ export function DesktopPreview() {
       {/* Status pills — the app narrating itself */}
       <div
         aria-hidden
-        className="glass animate-bob absolute -top-5 -left-4 rounded-full px-4 py-2 text-xs font-medium text-white/85 sm:-left-8"
+        className="glass md:animate-bob absolute -top-5 -left-4 rounded-full px-4 py-2 text-xs font-medium text-white/85 sm:-left-8"
       >
         🔋 Paused in Low Power Mode
       </div>
       <div
         aria-hidden
-        className="glass animate-bob absolute -right-3 -bottom-6 rounded-full px-4 py-2 text-xs font-medium text-white/85 [animation-delay:-3.5s] sm:-right-8"
+        className="glass md:animate-bob absolute -right-3 -bottom-6 rounded-full px-4 py-2 text-xs font-medium text-white/85 [animation-delay:-3.5s] sm:-right-8"
       >
         🖥 Playing on 2 displays
       </div>

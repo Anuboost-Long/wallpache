@@ -18,7 +18,7 @@ export function FinalCta() {
               alt=""
               width={104}
               height={104}
-              className="animate-bob relative mx-auto rounded-[26px] drop-shadow-2xl"
+              className="md:animate-bob relative mx-auto rounded-[26px] drop-shadow-2xl"
             />
 
             <h2 className="font-heading relative mt-7 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">

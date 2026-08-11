@@ -17,12 +17,16 @@ export function Aurora() {
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ink"
     >
-      <Blob className="animate-drift -top-[20%] -left-[10%] size-[44rem] bg-grape/60 blur-[110px]" />
-      <Blob className="animate-drift-slow -top-[6%] -right-[12%] size-[40rem] bg-pink/55 blur-[120px]" />
-      <Blob className="animate-drift top-[30%] left-[24%] size-[36rem] bg-orange/45 blur-[130px] [animation-delay:-8s]" />
-      <Blob className="animate-drift-slow top-[55%] -right-[8%] size-[40rem] bg-amber/40 blur-[140px] [animation-delay:-14s]" />
-      <Blob className="animate-drift bottom-[8%] -left-[14%] size-[38rem] bg-violet/55 blur-[120px] [animation-delay:-20s]" />
-      <Blob className="animate-drift-slow -bottom-[18%] left-[38%] size-[34rem] bg-sky/30 blur-[140px] [animation-delay:-26s]" />
+      {/* Phones get four blobs at half the blur radius and hold still: a
+          drifting `scale` forces the whole blurred layer to re-rasterise every
+          frame, which is the single most expensive thing on the page. The
+          field is so diffuse that the motion barely reads at that size. */}
+      <Blob className="md:animate-drift -top-[20%] -left-[10%] size-[44rem] bg-grape/60 blur-[55px] md:blur-[110px]" />
+      <Blob className="md:animate-drift-slow -top-[6%] -right-[12%] size-[40rem] bg-pink/55 blur-[60px] md:blur-[120px]" />
+      <Blob className="md:animate-drift top-[30%] left-[24%] hidden size-[36rem] bg-orange/45 blur-[130px] md:block [animation-delay:-8s]" />
+      <Blob className="md:animate-drift-slow top-[55%] -right-[8%] size-[40rem] bg-amber/40 blur-[70px] md:blur-[140px] [animation-delay:-14s]" />
+      <Blob className="md:animate-drift bottom-[8%] -left-[14%] size-[38rem] bg-violet/55 blur-[60px] md:blur-[120px] [animation-delay:-20s]" />
+      <Blob className="md:animate-drift-slow -bottom-[18%] left-[38%] hidden size-[34rem] bg-sky/30 blur-[140px] md:block [animation-delay:-26s]" />
 
       {/* Vignette keeps type readable without flattening the colour */}
       <div className="absolute inset-0 bg-[radial-gradient(130%_90%_at_50%_10%,transparent_35%,rgba(11,7,24,0.6)_100%)]" />
