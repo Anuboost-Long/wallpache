@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: `What ${site.name} does — and does not — collect.`,
 };
 
-const UPDATED = "August 9, 2026";
+const UPDATED = "August 12, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -41,12 +41,20 @@ export default function PrivacyPage() {
 
       <h2>2. This website</h2>
       <p>
-        This website is a static site with no accounts, forms, or first-party
-        analytics or advertising scripts. It is hosted by a third-party static
-        hosting provider, which may record standard web server logs (such as IP
-        address, browser type, and requested page) for operating and securing the
-        hosting infrastructure. We do not access these logs for tracking purposes
-        and do not combine them with any other data.
+        This website is a static site with no accounts, forms, or advertising
+        scripts. It is hosted by a third-party static hosting provider, which may
+        record standard web server logs (such as IP address, browser type, and
+        requested page) for operating and securing the hosting infrastructure. We
+        do not access these logs for tracking purposes and do not combine them
+        with any other data.
+      </p>
+      <p>
+        The site does load Vercel Web Analytics, which counts page views so we
+        can see which pages people reach. It sets no cookies, stores nothing on
+        your device, does not build a profile of you, and does not follow you to
+        other websites. What we see is aggregate: page paths, referrers, and
+        coarse details such as country, browser, and device type — never names,
+        email addresses, or anything else that identifies you.
       </p>
 
       <h2>3. Third-party services</h2>

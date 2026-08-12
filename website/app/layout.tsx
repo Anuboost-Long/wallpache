@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 
@@ -47,6 +48,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        {/*
+          Page views only — no custom events, no cookies. The script is served
+          from `/_vercel/insights/script.js`, which only exists on Vercel: on
+          any other static host it 404s and nothing is collected.
+        */}
+        <Analytics />
       </body>
     </html>
   );

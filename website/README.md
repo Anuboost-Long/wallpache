@@ -66,3 +66,16 @@ URLs resolve absolutely:
 ```bash
 NEXT_PUBLIC_SITE_URL="https://wallpache.example" npm run build
 ```
+
+## Analytics
+
+`app/layout.tsx` renders `<Analytics />` from `@vercel/analytics/next` — page
+views only, no custom events. The component loads its script from
+`/_vercel/insights/script.js`, an endpoint that only exists on Vercel, so the
+numbers only appear when the site is deployed there **and** Web Analytics is
+enabled for the project (Vercel dashboard → project → Analytics → Enable).
+Hosted anywhere else — GitHub Pages included — the request 404s, nothing is
+collected, and the page is otherwise unaffected.
+
+Section 2 of `app/privacy/page.tsx` describes this collection. Keep the two in
+sync if the setup changes.
