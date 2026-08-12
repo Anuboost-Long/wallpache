@@ -72,6 +72,14 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+export function CloseIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden {...props}>
+      <path d="m6.5 6.5 11 11m0-11-11 11" {...line} />
+    </svg>
+  );
+}
+
 export function DisplaysIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden {...props}>

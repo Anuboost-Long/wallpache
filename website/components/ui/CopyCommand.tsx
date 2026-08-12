@@ -12,6 +12,8 @@ type CopyCommandProps = Readonly<{
   display?: string;
   label?: string;
   className?: string;
+  /** Wraps onto a second line instead of truncating, where the command itself is the point. */
+  wrap?: boolean;
 }>;
 
 export function CopyCommand({
@@ -19,6 +21,7 @@ export function CopyCommand({
   display,
   label,
   className,
+  wrap = false,
 }: CopyCommandProps) {
   const [copied, setCopied] = useState(false);
 
@@ -52,7 +55,12 @@ export function CopyCommand({
         </span>
       )}
 
-      <code className="min-w-0 flex-1 truncate text-white/75">
+      <code
+        className={clsx(
+          "min-w-0 flex-1 text-white/75",
+          wrap ? "py-1 [overflow-wrap:break-word]" : "truncate",
+        )}
+      >
         <span className="mr-2 text-mint">$</span>
         {display ?? command}
       </code>

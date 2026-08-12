@@ -3,6 +3,7 @@ import type { ComponentType, ReactNode, SVGProps } from "react";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { CopyCommand } from "@/components/ui/CopyCommand";
 import { AppleIcon, DownloadIcon, WindowsIcon } from "@/components/ui/icons";
+import { MacDownloadButton } from "@/components/ui/MacDownloadButton";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { site } from "@/lib/site";
@@ -15,6 +16,8 @@ type PlatformCardProps = Readonly<{
   href: string;
   children: ReactNode;
   note: ReactNode;
+  /** Replaces the plain download button, for a platform that needs more than a link. */
+  action?: ReactNode;
 }>;
 
 function PlatformCard({
@@ -25,6 +28,7 @@ function PlatformCard({
   href,
   children,
   note,
+  action,
 }: PlatformCardProps) {
   return (
     <article className="glass glass-rim relative flex h-full flex-col rounded-3xl p-7 sm:p-8">
@@ -38,10 +42,12 @@ function PlatformCard({
         </div>
       </header>
 
-      <ButtonLink href={href} download size="lg" className="mt-7 w-full">
-        <DownloadIcon className="size-5" />
-        {cta}
-      </ButtonLink>
+      {action ?? (
+        <ButtonLink href={href} download size="lg" className="mt-7 w-full">
+          <DownloadIcon className="size-5" />
+          {cta}
+        </ButtonLink>
+      )}
 
       <div className="mt-6 flex-1">{children}</div>
 
@@ -78,10 +84,12 @@ export function Download() {
               requirements="Ventura 13.0 or later · Universal"
               cta="Download Wallpache.dmg"
               href={site.macDownload}
+              action={<MacDownloadButton />}
               note={
                 <>
-                  The one-line installer clears the quarantine flag for you —
-                  which is exactly why it&apos;s the route we recommend.
+                  The .dmg needs one Terminal command after it lands — the
+                  download walks you through it. The one-line installer does that
+                  step for you, which is why it&apos;s the route we recommend.
                 </>
               }
             >
@@ -135,6 +143,7 @@ export function Download() {
               </p>
               <CopyCommand
                 command={site.quarantineCommand}
+                wrap
                 className="mt-5"
               />
             </div>
