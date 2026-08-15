@@ -25,6 +25,12 @@ public partial class LibraryView : UserControl
     {
         InitializeComponent();
 
+        // The window sets AllowDrop too, but drag events are only ever raised
+        // on (and bubble up from) the nearest ancestor that has it set. Without
+        // this, the Window - not this control - is what Avalonia resolves as
+        // the drop target, so these handlers would never fire.
+        DragDrop.SetAllowDrop(this, true);
+
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
         AddHandler(DragDrop.DropEvent, OnDrop);
@@ -59,7 +65,7 @@ public partial class LibraryView : UserControl
             .Select(path => path!)
             .ToList();
 
-        await Model.Coordinator.ImportAsync(paths);
+        await Model.Coordinator.StageImportAsync(paths);
     }
 
     // MARK: - Drag and drop
@@ -92,7 +98,21 @@ public partial class LibraryView : UserControl
             }
         }
 
-        await Model.Coordinator.ImportAsync(paths);
+        await Model.Coordinator.StageImportAsync(paths);
+    }
+
+    // MARK: - Pending import review
+
+    private void OnClearPendingImports(object? sender, RoutedEventArgs args) => Model?.Coordinator.ClearPendingImports();
+
+    private void OnCommitPendingImports(object? sender, RoutedEventArgs args) => Model?.Coordinator.CommitPendingImports();
+
+    private void OnRemovePendingImport(object? sender, RoutedEventArgs args)
+    {
+        if (ItemFor(sender) is { } item)
+        {
+            Model?.Coordinator.RemovePendingImport(item.Record);
+        }
     }
 
     // MARK: - Cell actions

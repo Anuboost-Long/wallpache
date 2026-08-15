@@ -30,10 +30,15 @@ public sealed partial class MainViewModel : ViewModelBase
                 OnPropertyChanged(nameof(LaunchAtSignIn));
                 OnPropertyChanged(nameof(IsStartupUnavailable));
             }
+            else if (args.PropertyName == nameof(WallpaperCoordinator.PendingImports))
+            {
+                RebuildPendingImports();
+            }
         };
 
         RebuildLibrary();
         RebuildDisplays();
+        RebuildPendingImports();
     }
 
     public WallpaperCoordinator Coordinator { get; }
@@ -42,8 +47,22 @@ public sealed partial class MainViewModel : ViewModelBase
 
     public ObservableCollection<DisplayItemViewModel> DisplayItems { get; } = [];
 
+    /// <summary>Files staged for review after a pick or a drop, not yet kept.</summary>
+    public ObservableCollection<WallpaperItemViewModel> PendingImportItems { get; } = [];
+
     [ObservableProperty]
     public partial bool IsLibraryEmpty { get; private set; } = true;
+
+    [ObservableProperty]
+    public partial bool HasPendingImports { get; private set; }
+
+    public string PendingImportSummary => PendingImportItems.Count == 1
+        ? "1 video ready to import"
+        : $"{PendingImportItems.Count} videos ready to import";
+
+    public string PendingImportActionText => PendingImportItems.Count == 1
+        ? "Import 1 Video"
+        : $"Import {PendingImportItems.Count} Videos";
 
     // MARK: - Settings
 
@@ -118,6 +137,30 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             display.Sync();
         }
+    }
+
+    /// <summary>Mirrors <see cref="Wallpache.App.Core.WallpaperCoordinator.PendingImports"/> for the review strip.</summary>
+    private void RebuildPendingImports()
+    {
+        var existing = PendingImportItems.ToDictionary(item => item.Record.Id);
+        PendingImportItems.Clear();
+
+        foreach (var record in Coordinator.PendingImports)
+        {
+            if (existing.TryGetValue(record.Id, out var item))
+            {
+                PendingImportItems.Add(item);
+                continue;
+            }
+
+            var created = new WallpaperItemViewModel(Coordinator, record);
+            PendingImportItems.Add(created);
+            _ = created.LoadThumbnailAsync();
+        }
+
+        HasPendingImports = PendingImportItems.Count > 0;
+        OnPropertyChanged(nameof(PendingImportSummary));
+        OnPropertyChanged(nameof(PendingImportActionText));
     }
 
     private void RebuildDisplays()

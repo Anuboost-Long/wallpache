@@ -87,6 +87,14 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
     [ObservableProperty]
     public partial IReadOnlyList<WallpaperRecord> Library { get; private set; } = [];
 
+    /// <summary>
+    /// Files already copied and processed, but not yet added to
+    /// <see cref="Library"/>: staged for review so the user can drop the
+    /// wrong file and remove it before it is kept.
+    /// </summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<WallpaperRecord> PendingImports { get; private set; } = [];
+
     [ObservableProperty]
     public partial IReadOnlyList<DisplayDescriptor> Displays { get; private set; } = [];
 
@@ -181,8 +189,13 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
 
     // MARK: - Import
 
-    /// <summary>Imports files, e.g. from the file picker or a drag and drop.</summary>
-    public async Task ImportAsync(IReadOnlyList<string> paths)
+    /// <summary>
+    /// Copies and processes files, e.g. from the file picker or a drag and
+    /// drop, and stages the results in <see cref="PendingImports"/> for
+    /// review. Nothing is added to the library until
+    /// <see cref="CommitPendingImports"/> confirms it.
+    /// </summary>
+    public async Task StageImportAsync(IReadOnlyList<string> paths)
     {
         if (paths.Count == 0)
         {
@@ -191,6 +204,7 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
 
         IsImporting = true;
         var failures = new List<string>();
+        var staged = PendingImports.ToList();
 
         try
         {
@@ -198,10 +212,12 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
             {
                 try
                 {
-                    var record = await _libraryService.ImportAsync(path, _configuration.Library);
-                    if (_configuration.Library.All(existing => existing.Id != record.Id))
+                    var known = _configuration.Library.Concat(staged).ToList();
+                    var record = await _libraryService.ImportAsync(path, known);
+
+                    if (known.All(existing => existing.Id != record.Id))
                     {
-                        _configuration.Library.Add(record);
+                        staged.Add(record);
                     }
                 }
                 catch (Exception error)
@@ -216,14 +232,56 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
             IsImporting = false;
         }
 
-        Library = _configuration.Library.ToList();
-        Persist();
-        LibraryChanged?.Invoke();
+        PendingImports = staged;
 
         if (failures.Count > 0)
         {
             AlertMessage = string.Join(Environment.NewLine, failures);
         }
+    }
+
+    /// <summary>Drops one staged file from review and deletes its copied files.</summary>
+    public void RemovePendingImport(WallpaperRecord record)
+    {
+        if (PendingImports.All(item => item.Id != record.Id))
+        {
+            return;
+        }
+
+        _libraryService.Delete(record);
+        PendingImports = PendingImports.Where(item => item.Id != record.Id).ToList();
+    }
+
+    /// <summary>Discards the whole staged batch, deleting every copied file.</summary>
+    public void ClearPendingImports()
+    {
+        if (PendingImports.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var record in PendingImports)
+        {
+            _libraryService.Delete(record);
+        }
+
+        PendingImports = [];
+    }
+
+    /// <summary>Commits whatever remains of the staged batch into the library.</summary>
+    public void CommitPendingImports()
+    {
+        if (PendingImports.Count == 0)
+        {
+            return;
+        }
+
+        _configuration.Library.AddRange(PendingImports);
+        PendingImports = [];
+
+        Library = _configuration.Library.ToList();
+        Persist();
+        LibraryChanged?.Invoke();
     }
 
     /// <summary>

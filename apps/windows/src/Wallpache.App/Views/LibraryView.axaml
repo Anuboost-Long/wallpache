@@ -142,7 +142,7 @@
 
         <Separator Grid.Row="1" />
 
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="12">
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto" Margin="12">
             <TextBlock Grid.Column="0"
                        Text="{Binding Coordinator.StatusMessage}"
                        FontSize="12"
@@ -156,7 +156,25 @@
                          VerticalAlignment="Center"
                          IsVisible="{Binding Coordinator.IsImporting}" />
 
-            <Button Grid.Column="2"
+            <!-- A standing reminder that this window accepts a dropped video,
+                 not just an interactive drop target: the highlight below only
+                 shows up mid-drag, which is too late for a first-time user to
+                 discover the feature at all. Purely a label, so it does not
+                 fight the real drop target for hit-testing. -->
+            <Border Grid.Column="2"
+                    Margin="0,0,10,0"
+                    Padding="10,5"
+                    CornerRadius="8"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource TabSwitcherBorderBrush}"
+                    IsHitTestVisible="False">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="📄" FontSize="12" Opacity="0.7" />
+                    <TextBlock Text="Drop videos here" FontSize="12" Opacity="0.7" />
+                </StackPanel>
+            </Border>
+
+            <Button Grid.Column="3"
                     Content="Import Video…"
                     Classes="accent"
                     FontSize="12"
@@ -173,5 +191,90 @@
                 CornerRadius="12"
                 BorderThickness="3"
                 BorderBrush="{StaticResource BrandWavePurpleBrush}" />
+
+        <!-- Pending-import review: files are already copied and processed by
+             this point, but held back from the library grid above until the
+             user confirms them here, so a wrong drop or pick is still easy to
+             back out of. -->
+        <Border Grid.Row="0"
+                IsVisible="{Binding HasPendingImports}"
+                VerticalAlignment="Bottom"
+                Margin="8"
+                Padding="14"
+                MaxHeight="300"
+                CornerRadius="14"
+                Background="{DynamicResource ElevatedPanelBackgroundBrush}"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                BoxShadow="0 8 28 0 #80000000">
+            <StackPanel Spacing="12">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding PendingImportSummary}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Clear" FontSize="12" Click="OnClearPendingImports" />
+                        <Button Content="{Binding PendingImportActionText}"
+                                Classes="accent"
+                                FontSize="12"
+                                Click="OnCommitPendingImports" />
+                    </StackPanel>
+                </Grid>
+
+                <ScrollViewer MaxHeight="220" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding PendingImportItems}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WallpaperItemViewModel">
+                                <Border Width="150" Margin="0,0,12,0" ClipToBounds="True">
+                                    <StackPanel Spacing="6">
+                                        <Panel>
+                                            <Border CornerRadius="8"
+                                                    ClipToBounds="True"
+                                                    Height="88"
+                                                    Background="{DynamicResource ControlAltFillColorTertiaryBrush}">
+                                                <Panel>
+                                                    <TextBlock Text="🎞"
+                                                               FontSize="18"
+                                                               Opacity="0.45"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                                </Panel>
+                                            </Border>
+
+                                            <Button Content="✕"
+                                                    Classes="icon-circle on-image"
+                                                    Width="24"
+                                                    Height="24"
+                                                    FontSize="11"
+                                                    Margin="4"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    Click="OnRemovePendingImport"
+                                                    ToolTip.Tip="Remove" />
+                                        </Panel>
+
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Subtitle}"
+                                                   FontSize="11"
+                                                   Opacity="0.7" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>
