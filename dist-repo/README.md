@@ -133,7 +133,7 @@ original video later won't break anything.
 | | |
 |:--:|---|
 | **1** | **Open Wallpache.** The library window opens by itself the first time. After that, reach it from the menu-bar icon (macOS) or tray icon (Windows). |
-| **2** | **Add a video.** Drag an `.mp4`, `.mov`, or `.m4v` onto the window, or press **Import Video…** |
+| **2** | **Add a video.** Drag one or more `.mp4`, `.mov`, `.m4v`, or `.gif` files onto the window and they wait in a tray with a preview each, so you can drop the ones you don't want before pressing **Import**. **Import Video…** still adds a file straight away. A GIF is converted to a video as it is imported; the original is left where it is. |
 | **3** | **Preview it** to check the loop before you commit to it. |
 | **4** | **Apply it.** **Apply** covers every display, or use the **Display** menu on the tile for one screen at a time. |
 | **5** | *Optional* — turn on **Launch at login** (macOS) or **Launch at sign-in** (Windows) in Settings → Startup. |
@@ -247,7 +247,7 @@ place.
 |---|---|---|
 | **OS version** | 13.0 Ventura or later | Windows 10 (2004) or later, and 11 |
 | **Architecture** | Universal — Apple Silicon and Intel | x64 |
-| **Formats** | `.mp4` &nbsp; `.mov` &nbsp; `.m4v` | `.mp4` &nbsp; `.mov` &nbsp; `.m4v` |
+| **Formats** | `.mp4` &nbsp; `.mov` &nbsp; `.m4v` &nbsp; `.gif` | `.mp4` &nbsp; `.mov` &nbsp; `.m4v` &nbsp; `.gif` |
 
 ---
 
