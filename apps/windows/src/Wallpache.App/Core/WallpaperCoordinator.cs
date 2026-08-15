@@ -227,6 +227,24 @@ public sealed partial class WallpaperCoordinator : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Imports one file and publishes it as soon as it is ready, so a confirmed
+    /// batch fills the grid as it goes instead of all at once at the end.
+    /// </summary>
+    public async Task ImportOneAsync(string path)
+    {
+        var record = await _libraryService.ImportAsync(path, _configuration.Library);
+        if (_configuration.Library.Any(existing => existing.Id == record.Id))
+        {
+            return;
+        }
+
+        _configuration.Library.Add(record);
+        Library = _configuration.Library.ToList();
+        Persist();
+        LibraryChanged?.Invoke();
+    }
+
+    /// <summary>
     /// Renames one library entry. Only the display name changes: stored files
     /// are named by GUID, so nothing moves on disk and no session is disturbed.
     /// An empty or unchanged name is ignored rather than rejected with an error.

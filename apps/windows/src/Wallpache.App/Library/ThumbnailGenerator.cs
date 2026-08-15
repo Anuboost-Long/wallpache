@@ -45,6 +45,36 @@ public static class ThumbnailGenerator
         int? sourceHeight,
         int maximumPixelWidth)
     {
+        var bytes = await FrameAsync(videoPath, duration, sourceWidth, sourceHeight, maximumPixelWidth);
+        if (bytes is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
+            await File.WriteAllBytesAsync(destinationPath, bytes);
+            return true;
+        }
+        catch (Exception error)
+        {
+            Log.Library.Error($"Thumbnail write failed for {Path.GetFileName(videoPath)}: {error.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Encodes one representative frame as PNG without writing it anywhere.
+    /// Used to preview a file that has not been copied into storage yet.
+    /// </summary>
+    public static async Task<byte[]?> FrameAsync(
+        string videoPath,
+        double duration,
+        int? sourceWidth,
+        int? sourceHeight,
+        int maximumPixelWidth)
+    {
         try
         {
             var file = await StorageFile.GetFileFromPathAsync(videoPath);
@@ -65,20 +95,12 @@ public static class ThumbnailGenerator
                 height,
                 VideoFramePrecision.NearestFrame);
 
-            var bytes = await EncodePngAsync(frame);
-            if (bytes is null)
-            {
-                return false;
-            }
-
-            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-            await File.WriteAllBytesAsync(destinationPath, bytes);
-            return true;
+            return await EncodePngAsync(frame);
         }
         catch (Exception error)
         {
             Log.Library.Error($"Thumbnail generation failed for {Path.GetFileName(videoPath)}: {error.Message}");
-            return false;
+            return null;
         }
     }
 

@@ -19,7 +19,45 @@
         </ControlTheme>
     </UserControl.Resources>
 
-    <Grid RowDefinitions="*,Auto,Auto">
+    <UserControl.Styles>
+        <!-- Dashed drop target beside the import button. Avalonia's Border has
+             no dashed stroke, so the outline is a Rectangle behind the label. -->
+        <Style Selector="Rectangle.drop-zone">
+            <Setter Property="RadiusX" Value="8" />
+            <Setter Property="RadiusY" Value="8" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeDashArray" Value="4,3" />
+            <Setter Property="Stroke" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+            <Setter Property="Fill" Value="Transparent" />
+        </Style>
+
+        <Style Selector="Rectangle.drop-zone.targeted">
+            <Setter Property="Stroke" Value="{DynamicResource BrandWavePurpleBrush}" />
+            <Setter Property="Fill" Value="#1F8A4CFF" />
+        </Style>
+
+        <!-- A staged file's duration and resolution, or the reason it cannot
+             be imported, which reads as a warning rather than a detail. -->
+        <Style Selector="TextBlock.staged-detail">
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+
+        <Style Selector="TextBlock.staged-detail.problem">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource BrandWaveOrangeBrush}" />
+        </Style>
+
+        <!-- Icon-circle at tray-card scale: a staged card is half a library
+             tile, where the full-size affordance would cover the preview. -->
+        <Style Selector="Button.icon-circle.compact">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="CornerRadius" Value="13" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="*,Auto,Auto,Auto">
 
         <!-- Empty state -->
         <StackPanel Grid.Row="0"
@@ -35,7 +73,7 @@
             <TextBlock Text="No wallpapers yet"
                        FontSize="18"
                        HorizontalAlignment="Center" />
-            <TextBlock Text="Drag an .mp4, .mov, or .m4v video here, or use Import Video."
+            <TextBlock Text="Drag an .mp4, .mov, .m4v, or .gif here, or use Import Video."
                        TextWrapping="Wrap"
                        TextAlignment="Center"
                        Opacity="0.7" />
@@ -140,9 +178,135 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <Separator Grid.Row="1" />
+        <!-- Import tray: dropped files waiting for review. Nothing is copied
+             into the library until the user confirms the batch. -->
+        <StackPanel Grid.Row="1"
+                    IsVisible="{Binding ImportQueue.HasItems}"
+                    Spacing="10"
+                    Margin="0,0,0,12">
+            <Separator />
 
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="12">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="12,0">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding ImportQueue.Title}"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+
+                <ProgressBar Grid.Column="1"
+                             Width="120"
+                             Margin="10,0,0,0"
+                             VerticalAlignment="Center"
+                             Value="{Binding ImportQueue.ImportProgress}"
+                             IsVisible="{Binding ImportQueue.IsImporting}" />
+
+                <Button Grid.Column="3"
+                        Content="Clear"
+                        Classes="pill-action"
+                        Margin="0,0,6,0"
+                        Click="OnClearStaged" />
+
+                <Button Grid.Column="4"
+                        Content="{Binding ImportQueue.ImportTitle}"
+                        Classes="accent"
+                        FontSize="12"
+                        IsEnabled="{Binding ImportQueue.CanImport}"
+                        Click="OnConfirmImport" />
+            </Grid>
+
+            <!-- A fixed height keeps the tray a strip along the bottom: left to
+                 size itself, the row would take the grid's space above it. -->
+            <ScrollViewer Height="176"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding ImportQueue.Items}" Margin="12,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="10" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ImportItemViewModel">
+                            <Border Width="172"
+                                    Height="164"
+                                    Padding="8"
+                                    VerticalAlignment="Top"
+                                    ClipToBounds="True"
+                                    Classes="card">
+                                <StackPanel Spacing="6">
+                                    <Panel>
+                                        <Border CornerRadius="8"
+                                                ClipToBounds="True"
+                                                Height="88"
+                                                Background="{DynamicResource ControlAltFillColorTertiaryBrush}">
+                                            <Panel>
+                                                <TextBlock Text="🎞"
+                                                           FontSize="22"
+                                                           Opacity="0.45"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center" />
+                                                <Image Source="{Binding Preview}" Stretch="UniformToFill" />
+
+                                                <Panel Background="#59000000" IsVisible="{Binding IsBusy}">
+                                                    <ProgressBar IsIndeterminate="True"
+                                                                 Width="70"
+                                                                 HorizontalAlignment="Center"
+                                                                 VerticalAlignment="Center" />
+                                                </Panel>
+
+                                                <Panel Background="#59000000" IsVisible="{Binding IsImported}">
+                                                    <TextBlock Text="✓"
+                                                               FontSize="24"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Panel>
+
+                                                <Panel Background="#59000000" IsVisible="{Binding HasProblem}">
+                                                    <TextBlock Text="⚠"
+                                                               FontSize="22"
+                                                               Foreground="{DynamicResource BrandWaveOrangeBrush}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Panel>
+                                            </Panel>
+                                        </Border>
+
+                                        <Button Content="✕"
+                                                Classes="icon-circle on-image compact"
+                                                Margin="4"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top"
+                                                IsVisible="{Binding CanRemove}"
+                                                ToolTip.Tip="Remove from this import"
+                                                Click="OnRemoveStaged" />
+                                    </Panel>
+
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis" />
+
+                                    <TextBlock Text="{Binding Subtitle}"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"
+                                               MaxLines="2"
+                                               TextTrimming="CharacterEllipsis"
+                                               Classes="staged-detail"
+                                               Classes.problem="{Binding HasProblem}"
+                                               ToolTip.Tip="{Binding Subtitle}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
+
+        <Separator Grid.Row="2" />
+
+        <Grid Grid.Row="3" x:Name="Toolbar" ColumnDefinitions="*,Auto,Auto,Auto" Margin="12">
             <TextBlock Grid.Column="0"
                        Text="{Binding Coordinator.StatusMessage}"
                        FontSize="12"
@@ -156,7 +320,15 @@
                          VerticalAlignment="Center"
                          IsVisible="{Binding Coordinator.IsImporting}" />
 
-            <Button Grid.Column="2"
+            <Panel Grid.Column="2" x:Name="DropZone" Margin="0,0,10,0" VerticalAlignment="Center">
+                <Rectangle x:Name="DropZoneOutline" Classes="drop-zone" />
+                <TextBlock Text="Drop videos here"
+                           FontSize="12"
+                           Opacity="0.7"
+                           Margin="14,7" />
+            </Panel>
+
+            <Button Grid.Column="3"
                     Content="Import Video…"
                     Classes="accent"
                     FontSize="12"

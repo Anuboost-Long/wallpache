@@ -40,7 +40,18 @@ document is for.
 - [ ] Import via the tray menu and via **Import Video…**.
 - [ ] Drag and drop one file onto the Library tab.
 - [ ] Drag and drop several files at once.
+- [ ] Dropped files land in the import tray with a preview, and nothing reaches
+      the library until **Import** is pressed.
+- [ ] Removing a staged file leaves it out of the import; **Clear** empties the tray.
+- [ ] A staged file that cannot be played is shown with its reason and is not imported.
+- [ ] During a tray import, the per-file spinners and the "Importing n of m" bar
+      both advance, and the rest of the app stays usable.
 - [ ] Importing the same file twice does not create a second copy.
+- [ ] Import an animated `.gif`: it is converted, plays looping, and the stored
+      file is an `.mp4`. The original `.gif` stays where it was.
+- [ ] A GIF with transparency, frame offsets, or a disposal method other than
+      "none" (many optimised GIFs) plays without smearing or missing pixels.
+- [ ] Importing the same `.gif` twice does not convert it a second time.
 - [ ] Rename a wallpaper; the file on disk does not move and playback is undisturbed.
 - [ ] Delete a wallpaper that is in use; that display falls back to the normal wallpaper.
 - [ ] **Delete All Imported Videos** empties the library and stops playback.

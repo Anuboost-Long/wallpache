@@ -19,6 +19,7 @@
 
     <SolidColorBrush x:Key="BrandFrameLightBrush" Color="{StaticResource BrandFrameLight}" />
     <SolidColorBrush x:Key="BrandWavePurpleBrush" Color="{StaticResource BrandWavePurple}" />
+    <SolidColorBrush x:Key="BrandWaveOrangeBrush" Color="{StaticResource BrandWaveOrange}" />
 
     <!-- The wave gradient, used as an accent rule and for highlighted text. -->
     <LinearGradientBrush x:Key="BrandWaveBrush" StartPoint="0%,50%" EndPoint="100%,50%">

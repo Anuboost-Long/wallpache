@@ -17,6 +17,7 @@ public sealed partial class MainViewModel : ViewModelBase
     public MainViewModel(WallpaperCoordinator coordinator)
     {
         Coordinator = coordinator;
+        ImportQueue = new ImportQueueViewModel(coordinator.ImportOneAsync);
 
         coordinator.LibraryChanged += RebuildLibrary;
         coordinator.DisplaysChanged += RebuildDisplays;
@@ -37,6 +38,9 @@ public sealed partial class MainViewModel : ViewModelBase
     }
 
     public WallpaperCoordinator Coordinator { get; }
+
+    /// <summary>Dropped files waiting for the user to confirm the import.</summary>
+    public ImportQueueViewModel ImportQueue { get; }
 
     public ObservableCollection<WallpaperItemViewModel> LibraryItems { get; } = [];
 

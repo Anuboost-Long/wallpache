@@ -16,9 +16,9 @@ public partial class LibraryView : UserControl
 {
     private static readonly FilePickerFileType VideoFileType = new("Videos")
     {
-        Patterns = ["*.mp4", "*.mov", "*.m4v"],
-        AppleUniformTypeIdentifiers = ["public.movie"],
-        MimeTypes = ["video/mp4", "video/quicktime"]
+        Patterns = ["*.mp4", "*.mov", "*.m4v", "*.gif"],
+        AppleUniformTypeIdentifiers = ["public.movie", "com.compuserve.gif"],
+        MimeTypes = ["video/mp4", "video/quicktime", "image/gif"]
     };
 
     public LibraryView()
@@ -48,7 +48,7 @@ public partial class LibraryView : UserControl
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Choose an .mp4, .mov, or .m4v video to use as a live wallpaper.",
+            Title = "Choose an .mp4, .mov, .m4v, or animated .gif to use as a live wallpaper.",
             AllowMultiple = true,
             FileTypeFilter = [VideoFileType]
         });
@@ -68,14 +68,23 @@ public partial class LibraryView : UserControl
     {
         var hasFiles = args.DataTransfer.Contains(DataFormat.File);
         args.DragEffects = hasFiles ? DragDropEffects.Copy : DragDropEffects.None;
-        DropHighlight.IsVisible = hasFiles;
+
+        // The zone draws its own highlight, so the window-wide one would only be
+        // a second signal for the same drop.
+        var overZone = hasFiles && DropZone.Bounds.Contains(args.GetPosition(Toolbar));
+        DropHighlight.IsVisible = hasFiles && !overZone;
+        DropZoneOutline.Classes.Set("targeted", overZone);
     }
 
-    private void OnDragLeave(object? sender, DragEventArgs args) => DropHighlight.IsVisible = false;
+    private void OnDragLeave(object? sender, DragEventArgs args) => ClearDropHighlights();
 
-    private async void OnDrop(object? sender, DragEventArgs args)
+    /// <summary>
+    /// Dropped files are staged for review rather than imported straight away,
+    /// so an accidental drop costs nothing and a batch can be trimmed first.
+    /// </summary>
+    private void OnDrop(object? sender, DragEventArgs args)
     {
-        DropHighlight.IsVisible = false;
+        ClearDropHighlights();
 
         if (Model is null)
         {
@@ -92,7 +101,27 @@ public partial class LibraryView : UserControl
             }
         }
 
-        await Model.Coordinator.ImportAsync(paths);
+        Model.ImportQueue.Stage(paths);
+    }
+
+    private void ClearDropHighlights()
+    {
+        DropHighlight.IsVisible = false;
+        DropZoneOutline.Classes.Set("targeted", false);
+    }
+
+    // MARK: - Import tray
+
+    private void OnConfirmImport(object? sender, RoutedEventArgs args) => Model?.ImportQueue.ImportReadyItems();
+
+    private void OnClearStaged(object? sender, RoutedEventArgs args) => Model?.ImportQueue.RemoveAll();
+
+    private void OnRemoveStaged(object? sender, RoutedEventArgs args)
+    {
+        if ((sender as Control)?.DataContext is ImportItemViewModel item)
+        {
+            Model?.ImportQueue.Remove(item);
+        }
     }
 
     // MARK: - Cell actions

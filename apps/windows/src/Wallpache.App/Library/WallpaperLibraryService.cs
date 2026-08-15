@@ -17,7 +17,7 @@ namespace Wallpache.App.Library;
 public sealed class WallpaperLibraryService
 {
     /// <summary>Container extensions accepted at import time.</summary>
-    public static readonly string[] SupportedExtensions = [".mp4", ".mov", ".m4v"];
+    public static readonly string[] SupportedExtensions = [".mp4", ".mov", ".m4v", ".gif"];
 
     public WallpaperLibraryService(WallpaperStorage storage)
     {
@@ -35,14 +35,16 @@ public sealed class WallpaperLibraryService
     {
         var name = Path.GetFileName(sourcePath);
         var extension = Path.GetExtension(sourcePath).ToLowerInvariant();
+        var needsConversion = GifTranscoder.IsGif(sourcePath);
 
         if (!SupportedExtensions.Contains(extension))
         {
             throw WallpaperException.NotPlayable(name);
         }
 
-        // Validate before copying so an unusable file never enters storage.
-        var metadata = await VideoMetadataReader.ReadAsync(sourcePath);
+        // Validate before writing so an unusable file never enters storage. A
+        // GIF is validated by the transcoder below, which has to open it anyway.
+        var sourceMetadata = needsConversion ? null : (VideoMetadata?)await VideoMetadataReader.ReadAsync(sourcePath);
         var sourceSize = FileSize(sourcePath);
 
         var duplicate = existing.FirstOrDefault(record => IsDuplicate(record, sourcePath, sourceSize));
@@ -55,18 +57,25 @@ public sealed class WallpaperLibraryService
         var id = Guid.NewGuid();
         var relativePath = WallpaperStorage.RelativePath(
             WallpaperStorage.VideosDirectoryName,
-            $"{id:D}{extension}");
+            $"{id:D}{(needsConversion ? GifTranscoder.TranscodedFileExtension : extension)}");
         var destination = Storage.PathForRelative(relativePath);
 
         try
         {
             Storage.PrepareDirectories();
-            File.Copy(sourcePath, destination, overwrite: false);
+            if (!needsConversion)
+            {
+                File.Copy(sourcePath, destination, overwrite: false);
+            }
         }
         catch (Exception error)
         {
             throw WallpaperException.ImportFailed(name, error.Message);
         }
+
+        // A converted GIF is measured from the file that was just written, not
+        // from the source, so the record describes what actually plays.
+        var metadata = sourceMetadata ?? await GifTranscoder.TranscodeAsync(sourcePath, destination);
 
         var thumbnailPath = await MakeImageAsync(
             id,
@@ -93,7 +102,10 @@ public sealed class WallpaperLibraryService
             Duration = metadata.Duration,
             Width = metadata.Width,
             Height = metadata.Height,
-            FileSize = FileSize(destination),
+            // The source's size, not the imported copy's: for a plain copy they
+            // are the same, and for a converted GIF only the source's size can
+            // recognise the same file being dropped again.
+            FileSize = sourceSize,
             SourceFileName = name
         };
     }

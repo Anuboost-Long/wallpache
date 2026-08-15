@@ -16,7 +16,7 @@ public sealed class WallpaperException : Exception
 
     public string? RecoverySuggestion { get; }
 
-    private const string FormatSuggestion = "Try an H.264 .mp4, .mov, or .m4v file.";
+    private const string FormatSuggestion = "Try an H.264 .mp4, .mov, or .m4v file, or an animated .gif.";
 
     public static WallpaperException FileMissing(string name) => new(
         $"“{name}” could not be found. It may have been moved or deleted.",

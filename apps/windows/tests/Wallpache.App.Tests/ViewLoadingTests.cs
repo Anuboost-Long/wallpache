@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Platform;
@@ -58,6 +59,8 @@ public class ViewLoadingTests
         var view = new LibraryView();
 
         Assert.NotNull(view.FindControl<Border>("DropHighlight"));
+        Assert.NotNull(view.FindControl<Panel>("DropZone"));
+        Assert.NotNull(view.FindControl<Rectangle>("DropZoneOutline"));
     }
 
     [AvaloniaFact]
