@@ -13,14 +13,17 @@ import os
 nonisolated struct WallpaperLibraryService: @unchecked Sendable {
     /// Container types accepted at import time.
     static let supportedContentTypes: [UTType] = {
-        var types: [UTType] = [.mpeg4Movie, .quickTimeMovie]
+        var types: [UTType] = [.mpeg4Movie, .quickTimeMovie, .gif]
         if let m4v = UTType("com.apple.m4v-video") {
             types.append(m4v)
         }
         return types
     }()
 
-    static let supportedExtensions: Set<String> = ["mp4", "mov", "m4v"]
+    static let supportedExtensions: Set<String> = ["mp4", "mov", "m4v", "gif"]
+
+    /// What a converted GIF is stored as. Every other format is kept as it came.
+    static let transcodedFileExtension = "mov"
 
     let storage: WallpaperStorage
     private let fileManager: FileManager
@@ -34,13 +37,17 @@ nonisolated struct WallpaperLibraryService: @unchecked Sendable {
     /// record. `existing` is used to skip re-importing the same file twice.
     func importVideo(at sourceURL: URL, existing: [WallpaperRecord]) async throws -> WallpaperRecord {
         let name = sourceURL.lastPathComponent
+        let needsConversion = GIFTranscoder.isGIF(sourceURL)
 
         guard Self.supportedExtensions.contains(sourceURL.pathExtension.lowercased()) else {
             throw WallpaperError.notPlayable(name: name)
         }
 
-        // Validate before copying so an unusable file never enters storage.
-        let metadata = try await VideoMetadataReader.read(url: sourceURL, fileManager: fileManager)
+        // Validate before writing so an unusable file never enters storage. A
+        // GIF is validated by the transcoder below, which has to open it anyway.
+        let sourceMetadata = needsConversion
+            ? nil
+            : try await VideoMetadataReader.read(url: sourceURL, fileManager: fileManager)
         let sourceSize = fileSize(of: sourceURL)
 
         if let duplicate = existing.first(where: { isDuplicate($0, of: sourceURL, size: sourceSize) }) {
@@ -49,15 +56,29 @@ nonisolated struct WallpaperLibraryService: @unchecked Sendable {
         }
 
         let id = UUID()
-        let fileName = "\(id.uuidString).\(sourceURL.pathExtension.lowercased())"
+        let fileExtension = needsConversion
+            ? Self.transcodedFileExtension
+            : sourceURL.pathExtension.lowercased()
+        let fileName = "\(id.uuidString).\(fileExtension)"
         let relativePath = storage.relativePath(directory: WallpaperStorage.videosDirectoryName, fileName: fileName)
         let destination = storage.url(forRelativePath: relativePath)
 
         do {
             try storage.prepareDirectories(fileManager: fileManager)
-            try fileManager.copyItem(at: sourceURL, to: destination)
+            if !needsConversion {
+                try fileManager.copyItem(at: sourceURL, to: destination)
+            }
         } catch {
             throw WallpaperError.importFailed(name: name, reason: error.localizedDescription)
+        }
+
+        // A converted GIF is measured from the movie that was just written, not
+        // from the source, so the record describes what actually plays.
+        let metadata: VideoMetadata
+        if let sourceMetadata {
+            metadata = sourceMetadata
+        } else {
+            metadata = try await GIFTranscoder.transcode(gifAt: sourceURL, to: destination)
         }
 
         let thumbnailPath = await makeImage(
@@ -85,7 +106,10 @@ nonisolated struct WallpaperLibraryService: @unchecked Sendable {
             duration: metadata.duration,
             width: metadata.pixelSize.map { Int($0.width) },
             height: metadata.pixelSize.map { Int($0.height) },
-            fileSize: fileSize(of: destination),
+            // The source's size, not the imported copy's: for a plain copy they
+            // are the same, and for a converted GIF only the source's size can
+            // recognise the same file being dropped again.
+            fileSize: sourceSize,
             sourceFileName: name
         )
     }

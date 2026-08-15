@@ -32,6 +32,19 @@ nonisolated enum ThumbnailGenerator {
         duration: Double,
         maximumPixelWidth: CGFloat = thumbnailPixelWidth
     ) async -> Bool {
+        guard let image = await frame(from: videoURL, duration: duration, maximumPixelWidth: maximumPixelWidth) else {
+            return false
+        }
+        return write(image, to: destination)
+    }
+
+    /// Decodes one representative frame without writing it anywhere. Used to
+    /// preview a file that has not been copied into storage yet.
+    static func frame(
+        from videoURL: URL,
+        duration: Double,
+        maximumPixelWidth: CGFloat = thumbnailPixelWidth
+    ) async -> CGImage? {
         let asset = AVURLAsset(url: videoURL)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
@@ -46,10 +59,10 @@ nonisolated enum ThumbnailGenerator {
 
         do {
             let (image, _) = try await generator.image(at: time)
-            return write(image, to: destination)
+            return image
         } catch {
             Log.library.error("Thumbnail generation failed for \(videoURL.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            return false
+            return nil
         }
     }
 

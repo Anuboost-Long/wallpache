@@ -59,6 +59,11 @@ final class WallpaperCoordinator: ObservableObject {
 
     var storage: WallpaperStorage { libraryService.storage }
 
+    /// Dropped files waiting for the user to confirm the import.
+    lazy var importQueue = ImportQueue { [weak self] url in
+        try await self?.importVideo(at: url)
+    }
+
     init(
         settingsStore: SettingsStore,
         libraryService: WallpaperLibraryService,
@@ -158,7 +163,7 @@ final class WallpaperCoordinator: ObservableObject {
         panel.canChooseFiles = true
         panel.allowedContentTypes = WallpaperLibraryService.supportedContentTypes
         panel.prompt = "Import"
-        panel.message = "Choose an .mp4, .mov, or .m4v video to use as a live wallpaper."
+        panel.message = "Choose an .mp4, .mov, .m4v, or animated .gif to use as a live wallpaper."
 
         // An accessory app is not active, so the panel needs to be brought up
         // explicitly or it can open behind other windows.
@@ -194,6 +199,17 @@ final class WallpaperCoordinator: ObservableObject {
         if !failures.isEmpty {
             alertMessage = failures.joined(separator: "\n")
         }
+    }
+
+    /// Imports one file and publishes it as soon as it is ready, so a confirmed
+    /// batch fills the grid as it goes instead of all at once at the end.
+    func importVideo(at url: URL) async throws {
+        let record = try await libraryService.importVideo(at: url, existing: configuration.library)
+        guard !configuration.library.contains(where: { $0.id == record.id }) else { return }
+
+        configuration.library.append(record)
+        library = configuration.library
+        persist()
     }
 
     /// Renames one library entry. Only the display name changes: stored files

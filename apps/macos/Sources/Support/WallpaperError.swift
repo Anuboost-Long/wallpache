@@ -33,7 +33,7 @@ nonisolated enum WallpaperError: LocalizedError, Equatable {
     var recoverySuggestion: String? {
         switch self {
         case .notPlayable, .noVideoTrack, .emptyDuration, .protectedContent:
-            return "Try an H.264 or HEVC .mp4, .mov, or .m4v file."
+            return "Try an H.264 or HEVC .mp4, .mov, or .m4v file, or an animated .gif."
         case .fileMissing:
             return "Import the video again."
         case .importFailed, .storageUnavailable:

@@ -10,7 +10,7 @@
 <p><strong>Live video wallpapers for macOS and Windows.</strong></p>
 
 <p>
-Import an <code>.mp4</code>, <code>.mov</code>, or <code>.m4v</code> and it loops behind your desktop icons —<br>
+Import an <code>.mp4</code>, <code>.mov</code>, <code>.m4v</code>, or <code>.gif</code> and it loops behind your desktop icons —<br>
 per display, at the scale you choose, paused whenever your machine needs the battery.
 </p>
 
@@ -48,7 +48,7 @@ per display, at the scale you choose, paused whenever your machine needs the bat
 |---|---|---|
 | OS version | 13.0 Ventura or later | Windows 10 (2004) or later, and 11 |
 | Architecture | Universal — Apple Silicon and Intel | x64 |
-| Video formats | `.mp4`, `.mov`, `.m4v` | `.mp4`, `.mov`, `.m4v` |
+| Video formats | `.mp4`, `.mov`, `.m4v`, `.gif` | `.mp4`, `.mov`, `.m4v`, `.gif` |
 | To build | Xcode 16.3 or later | .NET SDK 9, Inno Setup 6 (for the installer) |
 
 ---
@@ -106,9 +106,14 @@ entirely. See [Building from source](#building-from-source).
 
 1. **Open Wallpache.** The library window opens by itself the first time. After
    that, reach it from the menu-bar icon.
-2. **Add a video.** Drag an `.mp4`, `.mov`, or `.m4v` onto the window, or press
-   **Import Video…**. The file is copied into Wallpache's own storage, so moving
-   or deleting the original later doesn't break the wallpaper.
+2. **Add a video.** Drag one or more `.mp4`, `.mov`, `.m4v`, or `.gif` files onto the
+   window — or onto **Drop videos here** next to the import button — and they
+   wait in a tray with a preview each, so you can drop the ones you don't want
+   before pressing **Import**. **Import Video…** still adds a file straight away.
+   Imported files are copied into Wallpache's own storage, so moving or deleting
+   the original later doesn't break the wallpaper. A GIF is converted to a video
+   as it is imported, since neither system can play one as a wallpaper directly;
+   the original GIF is left where it is.
 3. **Preview it** to check the loop before committing to it.
 4. **Apply it** — **Apply** covers every display, or use the **Display** menu on
    the tile to set one screen at a time.

@@ -4,21 +4,25 @@ import SwiftUI
 struct LibraryView: View {
     @EnvironmentObject private var coordinator: WallpaperCoordinator
     @State private var isDropTargeted = false
+    @State private var isZoneTargeted = false
 
     private let columns = [GridItem(.adaptive(minimum: 200, maximum: 280), spacing: 16)]
 
     var body: some View {
         VStack(spacing: 0) {
             content
+            ImportTray(queue: coordinator.importQueue)
             Divider()
             toolbar
         }
         .dropDestination(for: URL.self) { urls, _ in
-            Task { await coordinator.importVideos(at: urls) }
+            coordinator.importQueue.stage(urls)
             return true
         } isTargeted: { isDropTargeted = $0 }
         .overlay {
-            if isDropTargeted {
+            // The zone draws its own highlight, so the window-wide one would
+            // only be a second signal for the same drop.
+            if isDropTargeted, !isZoneTargeted {
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(Color.accentColor, lineWidth: 3)
                     .padding(8)
@@ -50,7 +54,7 @@ struct LibraryView: View {
                 .opacity(0.9)
             Text("No wallpapers yet")
                 .font(.title3.weight(.medium))
-            Text("Drag an .mp4, .mov, or .m4v video here, or use Import Video.")
+            Text("Drag an .mp4, .mov, .m4v, or .gif here, or use Import Video.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -70,6 +74,8 @@ struct LibraryView: View {
                 ProgressView()
                     .controlSize(.small)
             }
+
+            ImportDropZone(queue: coordinator.importQueue, isTargeted: $isZoneTargeted)
 
             Button("Import Video…") {
                 Task { await coordinator.presentImportPanel() }
